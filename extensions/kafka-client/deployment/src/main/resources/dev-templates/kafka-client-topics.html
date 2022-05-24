@@ -1,0 +1,16 @@
+{#include main fluid=true}
+{#title}Topics{/title}
+{#body}
+<div id="kafka-client-topics">
+{#if info:topics}
+    <div class="row">
+        <div class="offset-1">
+            <h3>Details</h3>
+        </div>
+    </div>
+{#else}
+  {#topicsNotFound /}
+{/if}
+</div>
+{/body}
+{/include}
