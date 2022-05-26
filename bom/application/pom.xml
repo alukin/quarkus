@@ -46,11 +46,11 @@
         <smallrye-graphql.version>1.5.0</smallrye-graphql.version>
         <smallrye-opentracing.version>2.1.0</smallrye-opentracing.version>
         <smallrye-fault-tolerance.version>5.4.0</smallrye-fault-tolerance.version>
-        <smallrye-jwt.version>3.4.0</smallrye-jwt.version>
+        <smallrye-jwt.version>3.5.0</smallrye-jwt.version>
         <smallrye-context-propagation.version>1.2.2</smallrye-context-propagation.version>
         <smallrye-reactive-streams-operators.version>1.0.13</smallrye-reactive-streams-operators.version>
         <smallrye-reactive-types-converter.version>2.7.0</smallrye-reactive-types-converter.version>
-        <smallrye-mutiny-vertx-binding.version>2.21.0</smallrye-mutiny-vertx-binding.version>
+        <smallrye-mutiny-vertx-binding.version>2.22.0</smallrye-mutiny-vertx-binding.version>
         <smallrye-reactive-messaging.version>3.16.0</smallrye-reactive-messaging.version>
         <smallrye-stork.version>1.1.2</smallrye-stork.version>
         <jakarta.activation.version>1.2.1</jakarta.activation.version>
@@ -79,8 +79,7 @@
         <plexus-utils.version>3.3.0</plexus-utils.version>
         <plexus-component-annotations.version>2.1.0</plexus-component-annotations.version>
         <graal-sdk.version>22.1.0</graal-sdk.version>
-        <!-- Use previous graal version till https://github.com/oracle/graal/issues/4518 gets resolved -->
-        <graal-svm.version>22.0.0.2</graal-svm.version>
+        <graal-svm.version>${graal-sdk.version}</graal-svm.version>
         <gizmo.version>1.0.11.Final</gizmo.version>
         <jackson-bom.version>2.13.3</jackson-bom.version>
         <commons-logging-jboss-logging.version>1.0.0.Final</commons-logging-jboss-logging.version>
@@ -96,7 +95,7 @@
         <jboss-transaction-api_1.2_spec.version>1.1.1.Final</jboss-transaction-api_1.2_spec.version>
         <agroal.version>1.16</agroal.version>
         <jboss-transaction-spi.version>7.6.0.Final</jboss-transaction-spi.version>
-        <elasticsearch-opensource-components.version>8.2.0</elasticsearch-opensource-components.version>
+        <elasticsearch-opensource-components.version>8.2.1</elasticsearch-opensource-components.version>
         <!-- for the now proprietary components of Elasticsearch, we use the last Open Source version -->
         <elasticsearch-proprietary-components-keeping-old-opensource-version.version>7.10.2</elasticsearch-proprietary-components-keeping-old-opensource-version.version>
         <rxjava.version>2.2.21</rxjava.version>
@@ -134,7 +133,7 @@
         <netty.version>4.1.74.Final</netty.version>
         <reactive-streams.version>1.0.3</reactive-streams.version>
         <jboss-logging.version>3.5.0.Final</jboss-logging.version>
-        <mutiny.version>1.4.0</mutiny.version>
+        <mutiny.version>1.5.0</mutiny.version>
         <kafka3.version>3.1.0</kafka3.version>
         <lz4.version>1.8.0</lz4.version> <!-- dependency of the kafka-clients that could be overriden by other imported BOMs in the platform -->
         <snappy.version>1.1.8.4</snappy.version>

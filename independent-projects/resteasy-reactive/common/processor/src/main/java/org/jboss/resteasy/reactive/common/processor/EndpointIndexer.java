@@ -60,6 +60,7 @@ import static org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNa
 import static org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNames.REST_RESPONSE;
 import static org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNames.REST_SSE_ELEMENT_TYPE;
 import static org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNames.REST_STREAM_ELEMENT_TYPE;
+import static org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNames.RUN_ON_VIRTUAL_THREAD;
 import static org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNames.SECURITY_CONTEXT;
 import static org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNames.SERVER_REQUEST_CONTEXT;
 import static org.jboss.resteasy.reactive.common.processor.ResteasyReactiveDotNames.SET;
@@ -117,6 +118,7 @@ import org.jboss.resteasy.reactive.common.model.MethodParameter;
 import org.jboss.resteasy.reactive.common.model.ParameterType;
 import org.jboss.resteasy.reactive.common.model.ResourceClass;
 import org.jboss.resteasy.reactive.common.model.ResourceMethod;
+import org.jboss.resteasy.reactive.common.processor.TargetJavaVersion.Status;
 import org.jboss.resteasy.reactive.common.processor.scanning.ApplicationScanningResult;
 import org.jboss.resteasy.reactive.common.processor.transformation.AnnotationStore;
 import org.jboss.resteasy.reactive.common.processor.transformation.AnnotationsTransformer;
@@ -158,6 +160,8 @@ public abstract class EndpointIndexer<T extends EndpointIndexer<T, PARAM, METHOD
     public static final String METHOD_CONTEXT_ANNOTATION_STORE = "ANNOTATION_STORE";
     public static final String METHOD_PRODUCES = "METHOD_PRODUCES";
 
+    private static final boolean JDK_SUPPORTS_VIRTUAL_THREADS;
+
     static {
         Map<String, String> prims = new HashMap<>();
         prims.put(byte.class.getName(), Byte.class.getName());
@@ -194,6 +198,14 @@ public abstract class EndpointIndexer<T extends EndpointIndexer<T, PARAM, METHOD
         supportedReaderJavaTps.put(BIG_DECIMAL, BigDecimal.class);
         supportedReaderJavaTps.put(BIG_INTEGER, BigInteger.class);
         supportedReaderJavaTypes = Collections.unmodifiableMap(supportedReaderJavaTps);
+
+        boolean isJDKCompatible = true;
+        try {
+            Class.forName("java.lang.ThreadBuilders");
+        } catch (ClassNotFoundException e) {
+            isJDKCompatible = false;
+        }
+        JDK_SUPPORTS_VIRTUAL_THREADS = isJDKCompatible;
     }
 
     protected final IndexView index;
@@ -216,6 +228,7 @@ public abstract class EndpointIndexer<T extends EndpointIndexer<T, PARAM, METHOD
     private final Set<DotName> contextTypes;
     private final MultipartReturnTypeIndexerExtension multipartReturnTypeIndexerExtension;
     private final MultipartParameterIndexerExtension multipartParameterIndexerExtension;
+    private final TargetJavaVersion targetJavaVersion;
 
     protected EndpointIndexer(Builder<T, ?, METHOD> builder) {
         this.index = builder.index;
@@ -237,6 +250,7 @@ public abstract class EndpointIndexer<T extends EndpointIndexer<T, PARAM, METHOD
         this.contextTypes = builder.contextTypes;
         this.multipartReturnTypeIndexerExtension = builder.multipartReturnTypeIndexerExtension;
         this.multipartParameterIndexerExtension = builder.multipartParameterIndexerExtension;
+        this.targetJavaVersion = builder.targetJavaVersion;
     }
 
     public Optional<ResourceClass> createEndpoints(ClassInfo classInfo, boolean considerApplication) {
@@ -613,6 +627,7 @@ public abstract class EndpointIndexer<T extends EndpointIndexer<T, PARAM, METHOD
             }
             Set<String> nameBindingNames = nameBindingNames(currentMethodInfo, classNameBindings);
             boolean blocking = isBlocking(currentMethodInfo, defaultBlocking);
+            boolean runOnVirtualThread = isRunOnVirtualThread(currentMethodInfo, defaultBlocking);
             // we want to allow "overriding" the blocking/non-blocking setting from an implementation class
             // when the class defining the annotations is an interface
             if (!actualEndpointInfo.equals(currentClassInfo) && Modifier.isInterface(currentClassInfo.flags())) {
@@ -621,7 +636,10 @@ public abstract class EndpointIndexer<T extends EndpointIndexer<T, PARAM, METHOD
                 if (actualMethodInfo != null) {
                     //we don't pass AUTOMATIC here, as the method signature would be the same, so the same determination
                     //would be reached for a default
-                    blocking = isBlocking(actualMethodInfo, blocking ? BlockingDefault.BLOCKING : BlockingDefault.NON_BLOCKING);
+                    blocking = isBlocking(actualMethodInfo,
+                            blocking ? BlockingDefault.BLOCKING : BlockingDefault.NON_BLOCKING);
+                    runOnVirtualThread = isRunOnVirtualThread(actualMethodInfo,
+                            blocking ? BlockingDefault.BLOCKING : BlockingDefault.NON_BLOCKING);
                 }
             }
 
@@ -640,6 +658,7 @@ public abstract class EndpointIndexer<T extends EndpointIndexer<T, PARAM, METHOD
                     .setNameBindingNames(nameBindingNames)
                     .setName(currentMethodInfo.name())
                     .setBlocking(blocking)
+                    .setRunOnVirtualThread(runOnVirtualThread)
                     .setSuspended(suspended)
                     .setSse(sse)
                     .setStreamElementType(streamElementType)
@@ -692,15 +711,65 @@ public abstract class EndpointIndexer<T extends EndpointIndexer<T, PARAM, METHOD
         return value;
     }
 
+    private boolean isRunOnVirtualThread(MethodInfo info, BlockingDefault defaultValue) {
+        boolean isRunOnVirtualThread = false;
+        Map.Entry<AnnotationTarget, AnnotationInstance> runOnVirtualThreadAnnotation = getInheritableAnnotation(info,
+                RUN_ON_VIRTUAL_THREAD);
+
+        //should the Transactional annotation override the annotation @RunOnVirtualThread ?
+        //here it does : it is impossible for a transaction to run on a virtual thread
+        Map.Entry<AnnotationTarget, AnnotationInstance> transactional = getInheritableAnnotation(info, TRANSACTIONAL); //we treat this the same as blocking, as JTA is blocking, but it is lower priority
+        if (transactional != null) {
+            return false;
+        }
+
+        if (runOnVirtualThreadAnnotation != null) {
+            if (!JDK_SUPPORTS_VIRTUAL_THREADS) {
+                throw new DeploymentException("Method '" + info.name() + "' of class '" + info.declaringClass().name()
+                        + "' uses @RunOnVirtualThread but the JDK version '" + Runtime.version() +
+                        "' and doesn't support virtual threads");
+            }
+            if (targetJavaVersion.isJava19OrHigher() == Status.FALSE) {
+                throw new DeploymentException("Method '" + info.name() + "' of class '" + info.declaringClass().name()
+                        + "' uses @RunOnVirtualThread but the target JDK version doesn't support virtual threads. Please configure your build tool to target Java 19 or above");
+            }
+            isRunOnVirtualThread = true;
+        }
+
+        //BlockingDefault.BLOCKING should mean "block a platform thread" ? here it does
+        if (defaultValue == BlockingDefault.BLOCKING) {
+            return false;
+        } else if (defaultValue == BlockingDefault.RUN_ON_VIRTUAL_THREAD) {
+            isRunOnVirtualThread = true;
+        } else if (defaultValue == BlockingDefault.NON_BLOCKING) {
+            return false;
+        }
+
+        if (isRunOnVirtualThread && !isBlocking(info, defaultValue)) {
+            throw new DeploymentException(
+                    "Method '" + info.name() + "' of class '" + info.declaringClass().name()
+                            + "' is considered a non blocking method. @RunOnVirtualThread can only be used on " +
+                            " methods considered blocking");
+        } else if (isRunOnVirtualThread) {
+            return true;
+        }
+
+        return false;
+    }
+
     private boolean isBlocking(MethodInfo info, BlockingDefault defaultValue) {
         Map.Entry<AnnotationTarget, AnnotationInstance> blockingAnnotation = getInheritableAnnotation(info, BLOCKING);
+        Map.Entry<AnnotationTarget, AnnotationInstance> runOnVirtualThreadAnnotation = getInheritableAnnotation(info,
+                RUN_ON_VIRTUAL_THREAD);
         Map.Entry<AnnotationTarget, AnnotationInstance> nonBlockingAnnotation = getInheritableAnnotation(info,
                 NON_BLOCKING);
+
         if ((blockingAnnotation != null) && (nonBlockingAnnotation != null)) {
             if (blockingAnnotation.getKey().kind() == nonBlockingAnnotation.getKey().kind()) {
                 if (blockingAnnotation.getKey().kind() == AnnotationTarget.Kind.METHOD) {
-                    throw new DeploymentException("Method '" + info.name() + "' of class '" + info.declaringClass().name()
-                            + "' contains both @Blocking and @NonBlocking annotations.");
+                    throw new DeploymentException(
+                            "Method '" + info.name() + "' of class '" + info.declaringClass().name()
+                                    + "' contains both @Blocking and @NonBlocking annotations.");
                 } else {
                     throw new DeploymentException("Class '" + info.declaringClass().name()
                             + "' contains both @Blocking and @NonBlocking annotations.");
@@ -724,6 +793,8 @@ public abstract class EndpointIndexer<T extends EndpointIndexer<T, PARAM, METHOD
         }
         if (defaultValue == BlockingDefault.BLOCKING) {
             return true;
+        } else if (defaultValue == BlockingDefault.RUN_ON_VIRTUAL_THREAD) {
+            return false;
         } else if (defaultValue == BlockingDefault.NON_BLOCKING) {
             return false;
         }
@@ -1340,6 +1411,7 @@ public abstract class EndpointIndexer<T extends EndpointIndexer<T, PARAM, METHOD
             public void handleMultipartParameter(ClassInfo multipartClassInfo, IndexView indexView) {
             }
         };
+        private TargetJavaVersion targetJavaVersion = new TargetJavaVersion.Unknown();
 
         public B setMultipartReturnTypeIndexerExtension(MultipartReturnTypeIndexerExtension multipartReturnTypeHandler) {
             this.multipartReturnTypeIndexerExtension = multipartReturnTypeHandler;
@@ -1438,6 +1510,11 @@ public abstract class EndpointIndexer<T extends EndpointIndexer<T, PARAM, METHOD
 
         public B setApplicationScanningResult(ApplicationScanningResult applicationScanningResult) {
             this.applicationScanningResult = applicationScanningResult;
+            return (B) this;
+        }
+
+        public B setTargetJavaVersion(TargetJavaVersion targetJavaVersion) {
+            this.targetJavaVersion = targetJavaVersion;
             return (B) this;
         }
 
