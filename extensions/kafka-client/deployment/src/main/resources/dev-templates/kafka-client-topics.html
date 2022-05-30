@@ -2,7 +2,7 @@
 {#title}Topics{/title}
 {#body}
 <div id="kafka-client-topics">
-{#if info:topics}
+{#if info:kafkaInfos}
     <div class="row">
         <div class="offset-1">
             <h3>Details</h3>
@@ -12,5 +12,13 @@
   {#topicsNotFound /}
 {/if}
 </div>
+Кafka list size: {info:kafkaInfos.size()} <br><!-- comment -->
+<ul>
+{#for item in info:kafkaInfos} 
+  <li>
+  Broker {item.brocker} 
+  </li>
+{/for}
+</ul>
 {/body}
 {/include}
