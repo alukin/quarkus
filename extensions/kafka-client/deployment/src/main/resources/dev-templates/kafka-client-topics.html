@@ -12,11 +12,11 @@
   {#topicsNotFound /}
 {/if}
 </div>
-Кafka list size: {info:kafkaInfos.size()} <br><!-- comment -->
+Кafka broker: {info:kafkaInfos.broker} <br><!-- comment -->
 <ul>
-{#for item in info:kafkaInfos} 
+{#for item in info:kafkaInfos.nodes} 
   <li>
-  Broker {item.brocker} 
+    Node: {item} 
   </li>
 {/for}
 </ul>

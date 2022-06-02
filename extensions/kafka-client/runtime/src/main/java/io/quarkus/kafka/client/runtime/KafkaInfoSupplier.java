@@ -1,24 +1,32 @@
 package io.quarkus.kafka.client.runtime;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
-public class KafkaInfoSupplier implements Supplier<Collection<KafkaInfo>> {
+import org.apache.kafka.common.Node;
+
+import io.quarkus.arc.Arc;
+
+public class KafkaInfoSupplier implements Supplier<KafkaInfo> {
 
     @Override
-    public List<KafkaInfo> get() {
-        List<KafkaInfo> infoList = new ArrayList<>(getKafkaInfos());
-
-        //TODO: get the info from Kafka runtime
-        return infoList;
-    }
-    
-    public static List<KafkaInfo> getKafkaInfos(){
-        List<KafkaInfo> infoList = new ArrayList<>();
+    public KafkaInfo get() {
+        KafkaAdminClient kafkaAdminClient = kafkaAdminClient();
         KafkaInfo ki = new KafkaInfo();
-        infoList.add(ki); 
-        return infoList;
+
+        try {
+            for (Node node : kafkaAdminClient.getClusterNodes()) {
+                ki.nodes.add(node.toString());
+            }
+        } catch (ExecutionException ex) {
+            //log somehow
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+        }
+        return ki;
+    }
+
+    public static KafkaAdminClient kafkaAdminClient() {
+        return Arc.container().instance(KafkaAdminClient.class).get();
     }
 }
