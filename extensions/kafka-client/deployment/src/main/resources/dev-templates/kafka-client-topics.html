@@ -13,10 +13,27 @@
 {/if}
 </div>
 Кafka broker: {info:kafkaInfos.broker} <br><!-- comment -->
+Kafka nodes: <br>
 <ul>
 {#for item in info:kafkaInfos.nodes} 
   <li>
     Node: {item} 
+  </li>
+{/for}
+</ul>
+Kafka topics: <br>
+<ul>
+{#for item in info:kafkaInfos.topics} 
+  <li>
+    Topic: {item} 
+  </li>
+{/for}
+</ul>
+Kafka consumer gropus: <br>
+<ul>
+{#for item in info:kafkaInfos.consumerGroups} 
+  <li>
+    Topic: {item} 
   </li>
 {/for}
 </ul>

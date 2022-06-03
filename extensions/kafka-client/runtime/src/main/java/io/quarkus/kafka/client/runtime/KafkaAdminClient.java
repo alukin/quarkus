@@ -12,6 +12,8 @@ import javax.inject.Singleton;
 
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.ConsumerGroupListing;
+import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.common.Node;
 
 import io.smallrye.common.annotation.Identifier;
@@ -37,7 +39,19 @@ public class KafkaAdminClient {
         client.close();
     }
 
+    public AdminClient getAdminClient() {
+        return client;
+    }
+
     public Collection<Node> getClusterNodes() throws ExecutionException, InterruptedException {
         return client.describeCluster().nodes().get();
+    }
+
+    public Collection<TopicListing> getTopics() throws InterruptedException, ExecutionException {
+        return client.listTopics().listings().get();
+    }
+
+    public Collection<ConsumerGroupListing> getConsumerGroups() throws InterruptedException, ExecutionException {
+        return client.listConsumerGroups().all().get();
     }
 }
