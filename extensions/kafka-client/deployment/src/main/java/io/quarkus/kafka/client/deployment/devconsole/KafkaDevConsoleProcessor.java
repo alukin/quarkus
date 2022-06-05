@@ -19,9 +19,9 @@ public class KafkaDevConsoleProcessor {
                 new KafkaInfoSupplier(), this.getClass(), curateOutcomeBuildItem);
     }
 
-    @BuildStep
+    @BuildStep(onlyIf = IsDevelopment.class)
     @Record(value = STATIC_INIT, optional = true)
     DevConsoleRouteBuildItem invokeEndpoint(KafkaDevConsoleRecorder recorder) {
-        return new DevConsoleRouteBuildItem("kafka", "POST", recorder.kafkaControlHandler());
+        return new DevConsoleRouteBuildItem("kafka-client-ui", "POST", recorder.kafkaControlHandler());
     }
 }

@@ -54,4 +54,10 @@ public class KafkaAdminClient {
     public Collection<ConsumerGroupListing> getConsumerGroups() throws InterruptedException, ExecutionException {
         return client.listConsumerGroups().all().get();
     }
+
+    public boolean createTopic(String key) {
+        boolean res = true;
+        System.err.println("================ Creating topic: " + key);
+        return res;
+    }
 }
