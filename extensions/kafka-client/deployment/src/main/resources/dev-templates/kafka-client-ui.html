@@ -1,0 +1,67 @@
+{#include main fluid=true}
+{#script}
+
+function createTopic(topicName){
+    $.post("",
+        {
+          key: topicName,
+          action: "createTopic"
+        },
+        function(data, status){
+            if(status === "success"){
+                console.log("Topic created");
+            }else{
+               console.error("Error creating topic");
+            }
+        });
+}
+{/script}
+
+{#title}Kafka dev UI{/title}
+{#body}
+<div id="kafka-client-topics">
+    {#if info:kafkaInfos}
+    <div class="row">
+        <div class="offset-1">
+            <h3>Details</h3>
+        </div>
+    </div>
+    {#else}
+    {#topicsNotFound /}
+    {/if}
+</div>
+Кafka broker: {info:kafkaInfos.broker} <br><!-- comment -->
+Kafka nodes: <br>
+<ul>
+    {#for item in info:kafkaInfos.nodes} 
+    <li>
+        Node: {item} 
+    </li>
+    {/for}
+</ul>
+Kafka topics: <br>
+<ul>
+    {#for item in info:kafkaInfos.topics} 
+    <li>
+        Topic: {item} 
+    </li>
+    {/for}
+</ul>
+Kafka consumer gropus: <br>
+<ul>
+    {#for item in info:kafkaInfos.consumerGroups} 
+    <li>
+        Topic: {item} 
+    </li>
+    {/for}
+</ul>
+<hr>
+<form method="post"
+      enctype="application/x-www-form-urlencoded">
+    <label class="form-check-label" for="create"></label>
+    <input type="text" name="key" value="new_topic">
+    <input type="submit" onsubmit="createTopic(key)"
+           class="btn btn-primary btn-sm" >
+</form>
+{/body}
+{/include}
