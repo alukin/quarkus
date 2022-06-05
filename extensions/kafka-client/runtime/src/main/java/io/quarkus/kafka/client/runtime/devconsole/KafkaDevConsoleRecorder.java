@@ -23,10 +23,10 @@ public class KafkaDevConsoleRecorder {
             protected void handlePost(RoutingContext event, MultiMap form) throws Exception {
                 String action = form.get("action");
                 String key = form.get("key");
-                String data = form.get("value");
-                System.err.println("========== POST handler called. Ation: " + action + " key: " + key + " data: " + data);
-                performAction(action, key, data);
-                endResponse(event, OK, "all good");
+                String value = form.get("value");
+                String debug = "========== POST handler called. Action: " + action + " key: " + key + " value: " + value;
+                performAction(action, key, value);
+                endResponse(event, OK, debug);
             }
 
             @Override
