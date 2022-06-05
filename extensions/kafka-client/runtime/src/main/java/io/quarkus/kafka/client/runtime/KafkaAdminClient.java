@@ -1,5 +1,6 @@
 package io.quarkus.kafka.client.runtime;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,14 +14,17 @@ import javax.inject.Singleton;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.common.Node;
+import org.jboss.logging.Logger;
 
 import io.smallrye.common.annotation.Identifier;
 
 @Singleton
 public class KafkaAdminClient {
 
+    private static final Logger LOGGER = Logger.getLogger(KafkaAdminClient.class);
     @Inject
     @Identifier("default-kafka-broker")
     private Map<String, Object> config;
@@ -57,7 +61,12 @@ public class KafkaAdminClient {
 
     public boolean createTopic(String key) {
         boolean res = true;
-        System.err.println("================ Creating topic: " + key);
+        LOGGER.debug("================ Creating topic: " + key);
+        ArrayList<NewTopic> newTopics = new ArrayList<>();
+        Short n = 1;
+        NewTopic nt = new NewTopic(key, 1, n);
+        newTopics.add(nt);
+        client.createTopics(newTopics);
         return res;
     }
 }

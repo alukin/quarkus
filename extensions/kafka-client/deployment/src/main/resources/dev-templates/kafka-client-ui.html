@@ -4,8 +4,9 @@
 function createTopic(topicName){
     $.post("",
         {
+          action: "createTopic",
           key: topicName,
-          action: "createTopic"
+          value: "no data"
         },
         function(data, status){
             if(status === "success"){
@@ -60,7 +61,8 @@ Kafka consumer gropus: <br>
       enctype="application/x-www-form-urlencoded">
     <label class="form-check-label" for="create"></label>
     <input type="text" name="key" value="new_topic">
-    <input type="submit" onsubmit="createTopic(key)"
+    <input type="hidden" name="action" value="createTopic">
+    <input type="submit"  value="Create topic"
            class="btn btn-primary btn-sm" >
 </form>
 {/body}
