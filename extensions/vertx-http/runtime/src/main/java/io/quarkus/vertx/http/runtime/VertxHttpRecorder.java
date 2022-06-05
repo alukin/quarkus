@@ -100,6 +100,7 @@ import io.vertx.core.http.HttpVersion;
 import io.vertx.core.http.impl.Http1xServerConnection;
 import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.impl.EventLoopContext;
+import io.vertx.core.impl.Utils;
 import io.vertx.core.impl.VertxInternal;
 import io.vertx.core.net.JdkSSLEngineOptions;
 import io.vertx.core.net.KeyStoreOptions;
@@ -655,15 +656,18 @@ public class VertxHttpRecorder {
                 if (event.failed()) {
                     Throwable effectiveCause = event.cause();
                     if (effectiveCause instanceof BindException) {
+                        List<Integer> portsUsed = Collections.emptyList();
+
                         if ((sslConfig == null) && (httpServerOptions != null)) {
-                            effectiveCause = new QuarkusBindException(httpServerOptions.getPort());
+                            portsUsed = List.of(httpServerOptions.getPort());
                         } else if ((httpConfiguration.insecureRequests == InsecureRequests.DISABLED) && (sslConfig != null)) {
-                            effectiveCause = new QuarkusBindException(sslConfig.getPort());
+                            portsUsed = List.of(sslConfig.getPort());
                         } else if ((sslConfig != null) && (httpConfiguration.insecureRequests == InsecureRequests.ENABLED)
                                 && (httpServerOptions != null)) {
-                            effectiveCause = new QuarkusBindException(
-                                    List.of(httpServerOptions.getPort(), sslConfig.getPort()));
+                            portsUsed = List.of(httpServerOptions.getPort(), sslConfig.getPort());
                         }
+
+                        effectiveCause = new QuarkusBindException((BindException) effectiveCause, portsUsed);
                     }
                     futureResult.completeExceptionally(effectiveCause);
                 } else {
@@ -672,7 +676,6 @@ public class VertxHttpRecorder {
             }
         });
         try {
-
             String deploymentId = futureResult.get();
             VertxCoreRecorder.setWebDeploymentId(deploymentId);
             closeTask = new Runnable() {
@@ -690,7 +693,7 @@ public class VertxHttpRecorder {
                                     }
                                 });
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                LOGGER.warn("Failed to undeploy deployment ", e);
                             }
                             try {
                                 latch.await();
@@ -1127,7 +1130,14 @@ public class VertxHttpRecorder {
                         startFuture.complete(null);
                     }
                 } else {
-                    startFuture.fail(event.cause());
+                    if (event.cause() instanceof IllegalArgumentException) {
+                        startFuture.fail(new IllegalArgumentException(
+                                String.format(
+                                        "Unable to bind to Unix domain socket. Consider adding the 'io.netty:%s' dependency. See the Quarkus Vert.x reference guide for more details.",
+                                        Utils.isLinux() ? "netty-transport-native-epoll" : "netty-transport-native-kqueue")));
+                    } else {
+                        startFuture.fail(event.cause());
+                    }
                 }
             });
         }
