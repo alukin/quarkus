@@ -1,69 +1,110 @@
 {#include main fluid=true}
+{#style}
+* {
+box-sizing: border-box;
+}
+
+.column {
+float: left;
+padding: 10px;
+}
+
+.left {
+width: 15%;
+}
+
+.right {
+width: 85%;
+}
+
+.row:after {
+content: "";
+display: table;
+clear: both;
+}
+
+.link { 
+    background:none; 
+    border:none; 
+    background-color:#005fff;
+    color:#ffffff
+}
+{/style}
+
 {#script}
 
-function createTopic(topicName){
+function createTopic(){
+    var topicName = document.getElementById("create_topic").value;
     $.post("",
         {
-          action: "createTopic",
-          key: topicName,
-          value: "no data"
+            action: "createTopic",
+            key: topicName,
+            value: "no data"
         },
         function(data, status){
             if(status === "success"){
-                console.log("Topic created");
-            }else{
-               console.error("Error creating topic");
-            }
-        });
+            console.log("Topic created: "+topicName);
+        }else{
+            console.error("Error creating topic");
+        }
+    });
+}
+
+function hideAllContent(){
+}
+
+function show(id){
+    console.log("Showing ID "+id);
 }
 {/script}
 
 {#title}Kafka dev UI{/title}
 {#body}
-<div id="kafka-client-topics">
-    {#if info:kafkaInfos}
-    <div class="row">
-        <div class="offset-1">
-            <h3>Details</h3>
-        </div>
-    </div>
-    {#else}
-    {#topicsNotFound /}
-    {/if}
+
+<div class="row" style="background-color:#005fff; color:#ffffff">
+    <h3>Kafka dev UI</h3>
 </div>
-Кafka broker: {info:kafkaInfos.broker} <br><!-- comment -->
-Kafka nodes: <br>
-<ul>
-    {#for item in info:kafkaInfos.nodes} 
-    <li>
-        Node: {item} 
-    </li>
-    {/for}
-</ul>
-Kafka topics: <br>
-<ul>
-    {#for item in info:kafkaInfos.topics} 
-    <li>
-        Topic: {item} 
-    </li>
-    {/for}
-</ul>
-Kafka consumer gropus: <br>
-<ul>
-    {#for item in info:kafkaInfos.consumerGroups} 
-    <li>
-        Topic: {item} 
-    </li>
-    {/for}
-</ul>
-<hr>
-<form method="post"
-      enctype="application/x-www-form-urlencoded">
-    <label class="form-check-label" for="create"></label>
-    <input type="text" name="key" value="new_topic">
-    <input type="hidden" name="action" value="createTopic">
-    <input type="submit"  value="Create topic"
-           class="btn btn-primary btn-sm" >
-</form>
+<div class="row">
+    <div class="column left" style="background-color:#005fff; color:#ffffff">
+        <p><button class="link" onclick="show('topics')">Topics</button></p>
+        <p><button class="link" onclick="show('partitions')">Partitions</button></p>
+        <p><button class="link" onclick="show('brokers')">Brokers</button></p>
+        <p><button class="link" onclick="show('schema')">Schema registry</button></p>
+        <p><button class="link" onclick="show('cgroups')">Consumer groups</button></p>
+        <p><button class="link" onclick="show('acls')">Access control list</button></p>
+        <p><button class="link" onclick="show('nodes')">Nodes</button></p>
+    </div>
+    <div class="column right" style="background-color:#ffffff;">
+        Кafka broker: {info:kafkaInfos.broker} <br><!-- comment -->
+        Kafka nodes: <br>
+        <ul>
+            {#for item in info:kafkaInfos.nodes} 
+            <li>
+                Node: {item} 
+            </li>
+            {/for}
+        </ul>
+        Kafka topics: <br>
+        <ul>
+            {#for item in info:kafkaInfos.topics} 
+            <li>
+                Topic: {item} 
+            </li>
+            {/for}
+        </ul>
+        Kafka consumer gropus: <br>
+        <ul>
+            {#for item in info:kafkaInfos.consumerGroups} 
+            <li>
+                Topic: {item} 
+            </li>
+            {/for}
+        </ul>
+        <hr>
+            <input type="text" name="key" value="new_topic" id="create_topic">
+            <button class="btn btn-primary btn-sm" onclick="createTopic()">Create topic</button>
+
+    </div>
+</div>
 {/body}
 {/include}

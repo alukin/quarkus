@@ -8,9 +8,10 @@ import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.common.Node;
 
 import io.quarkus.arc.Arc;
+import io.quarkus.kafka.client.runtime.devconsole.model.KafkaInfo;
+import io.quarkus.kafka.client.runtime.devconsole.model.KafkaTopic;
 
 public class KafkaInfoSupplier implements Supplier<KafkaInfo> {
-
     @Override
     public KafkaInfo get() {
         KafkaAdminClient kafkaAdminClient = kafkaAdminClient();
@@ -21,10 +22,10 @@ public class KafkaInfoSupplier implements Supplier<KafkaInfo> {
                 ki.nodes.add(node.toString());
             }
             for (TopicListing tl : kafkaAdminClient.getTopics()) {
-                ki.topics.add(tl.toString());
+                ki.topics.add(kafkaTopic(tl));
             }
             for (ConsumerGroupListing cgl : kafkaAdminClient.getConsumerGroups()) {
-                ki.topics.add(cgl.toString());
+                ki.consumerGroups.add(cgl.toString());
             }
         } catch (ExecutionException ex) {
             //log somehow
@@ -32,6 +33,14 @@ public class KafkaInfoSupplier implements Supplier<KafkaInfo> {
             Thread.currentThread().interrupt();
         }
         return ki;
+    }
+
+    private KafkaTopic kafkaTopic(TopicListing tl) {
+        KafkaTopic kt = new KafkaTopic();
+        kt.name = tl.name();
+        kt.internal = tl.isInternal();
+        kt.topicId = tl.topicId().toString();
+        return kt;
     }
 
     public static KafkaAdminClient kafkaAdminClient() {
