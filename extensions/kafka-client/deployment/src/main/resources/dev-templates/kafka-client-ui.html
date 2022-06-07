@@ -50,12 +50,31 @@ function createTopic(){
     });
 }
 
-function hideAllContent(){
+function hideAllContentExcept( ex ){
+    const allDivs=["topics","partitions","brokers","schema","cgroups","acls","nodes"];
+    for (let i = 0; i < allDivs.length; i++) {
+        var ename = allDivs[i]; 
+        var d = document.getElementById(ename);
+        if(d!=null){
+            if(ename!==ex){
+                d.style.display = "none";
+            }else{
+                d.style.display = "block";
+            }
+        }else{
+            console.log("Can not find div ",allDivs[i]);
+        }
+    }
 }
 
 function show(id){
-    console.log("Showing ID "+id);
+    hideAllContentExcept(id);
 }
+
+$( document ).ready(function() {
+    hideAllContentExcept("topics");
+});
+
 {/script}
 
 {#title}Kafka dev UI{/title}
@@ -74,35 +93,64 @@ function show(id){
         <p><button class="link" onclick="show('acls')">Access control list</button></p>
         <p><button class="link" onclick="show('nodes')">Nodes</button></p>
     </div>
+    
     <div class="column right" style="background-color:#ffffff;">
-        Кafka broker: {info:kafkaInfos.broker} <br><!-- comment -->
-        Kafka nodes: <br>
-        <ul>
-            {#for item in info:kafkaInfos.nodes} 
-            <li>
-                Node: {item} 
-            </li>
-            {/for}
-        </ul>
-        Kafka topics: <br>
-        <ul>
-            {#for item in info:kafkaInfos.topics} 
-            <li>
-                Topic: {item} 
-            </li>
-            {/for}
-        </ul>
-        Kafka consumer gropus: <br>
-        <ul>
-            {#for item in info:kafkaInfos.consumerGroups} 
-            <li>
-                Topic: {item} 
-            </li>
-            {/for}
-        </ul>
-        <hr>
+
+        <div id="topics">
+            Kafka topics: <br>
+            <ul>
+                {#for item in info:kafkaInfos.topics} 
+                  <li>
+                    Topic: {item} 
+                  </li>
+                {/for}
+            </ul>
+            <hr>
             <input type="text" name="key" value="new_topic" id="create_topic">
             <button class="btn btn-primary btn-sm" onclick="createTopic()">Create topic</button>
+        </div>     
+        
+        <div id="partitions">
+            Partitions<br>
+            Blalalala
+        </div>
+        
+        <div id="brokers">
+            Кafka broker: {info:kafkaInfos.broker} <br><br>
+            Blalalala
+        </div>
+        
+        <div id="schema">
+            Schema<br>
+            Blalalala
+        </div> 
+        
+        <div id="cgroups">
+            Kafka consumer gropus: <br>
+            <ul>
+                {#for item in info:kafkaInfos.consumerGroups} 
+                <li>
+                    Topic: {item} 
+                </li>
+                {/for}
+            </ul>
+        </div>
+        
+        <div id="acls">
+            ACL<br>
+            Blalalala
+        </div>
+        
+        <div id="nodes">
+            Kafka nodes: <br>
+            <ul>
+                {#for item in info:kafkaInfos.nodes} 
+                <li>
+                    Node: {item} 
+                </li>
+                {/for}
+            </ul>
+        </div>
 
     </div>
 </div>
