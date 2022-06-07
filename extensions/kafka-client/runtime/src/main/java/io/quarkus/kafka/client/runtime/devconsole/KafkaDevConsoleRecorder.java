@@ -1,5 +1,6 @@
 package io.quarkus.kafka.client.runtime.devconsole;
 
+import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -24,9 +25,24 @@ public class KafkaDevConsoleRecorder {
                 String action = form.get("action");
                 String key = form.get("key");
                 String value = form.get("value");
-                String debug = "========== POST handler called. Action: " + action + " key: " + key + " value: " + value;
-                performAction(action, key, value);
-                endResponse(event, OK, debug);
+                KafkaAdminClient adminClient = kafkaAdminClient();
+                String message = "OK";
+                boolean res = true;
+                if ("createTopic".equals(action)) {
+                    res = adminClient.createTopic(key);
+                } else if ("deleteTopic".equals(action)) {
+                    res = adminClient.deleteTopic(key);
+                } else if ("topicMesssages".equals(action)) {
+                    message = readTopic(key, value);
+                } else {
+                    res = false;
+                }
+                if (res) {
+                    endResponse(event, OK, message);
+                } else {
+                    message = "ERROR";
+                    endResponse(event, BAD_REQUEST, message);
+                }
             }
 
             @Override
@@ -42,13 +58,8 @@ public class KafkaDevConsoleRecorder {
                 return Arc.container().instance(KafkaAdminClient.class).get();
             }
 
-            private boolean performAction(String action, String key, String data) {
-                KafkaAdminClient adminClient = kafkaAdminClient();
-                boolean res = true;
-                if ("createTopic".equals(action)) {
-                    adminClient.createTopic(key);
-                }
-                return res;
+            private String readTopic(String topicName, String offset) {
+                return "";
             }
         };
     }
