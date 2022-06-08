@@ -5,9 +5,11 @@ import java.util.function.Supplier;
 
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
 import org.apache.kafka.clients.admin.TopicListing;
+import org.apache.kafka.common.ConsumerGroupState;
 import org.apache.kafka.common.Node;
 
 import io.quarkus.arc.Arc;
+import io.quarkus.kafka.client.runtime.devconsole.model.ConsumerGroup;
 import io.quarkus.kafka.client.runtime.devconsole.model.KafkaInfo;
 import io.quarkus.kafka.client.runtime.devconsole.model.KafkaTopic;
 
@@ -25,7 +27,10 @@ public class KafkaInfoSupplier implements Supplier<KafkaInfo> {
                 ki.topics.add(kafkaTopic(tl));
             }
             for (ConsumerGroupListing cgl : kafkaAdminClient.getConsumerGroups()) {
-                ki.consumerGroups.add(cgl.toString());
+                ConsumerGroup cg = new ConsumerGroup();
+                cg.name = cgl.groupId();
+                cg.state = cgl.state().orElse(ConsumerGroupState.EMPTY).name();
+                ki.consumerGroups.add(cg);
             }
         } catch (ExecutionException ex) {
             //log somehow
