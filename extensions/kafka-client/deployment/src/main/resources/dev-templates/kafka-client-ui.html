@@ -50,8 +50,7 @@ function createTopic(){
     });
 }
 
-function deleteTopic(){
-    var topicName = document.getElementById("create_topic").value; //change
+function deleteTopic(topicName){
     $.post("",
         {
             action: "deleteTopic",
