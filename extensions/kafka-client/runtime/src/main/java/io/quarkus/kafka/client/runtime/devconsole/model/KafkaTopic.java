@@ -4,6 +4,7 @@ public class KafkaTopic {
     public String name;
     public String topicId;
     public boolean internal;
+    public int nmsg = 0;
 
     public String toString() {
         StringBuilder sb = new StringBuilder(name);

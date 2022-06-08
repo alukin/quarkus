@@ -50,6 +50,23 @@ function createTopic(){
     });
 }
 
+function deleteTopic(){
+    var topicName = document.getElementById("create_topic").value; //change
+    $.post("",
+        {
+            action: "deleteTopic",
+            key: topicName,
+            value: "no data"
+        },
+        function(data, status){
+            if(status === "success"){
+            console.log("Topic deleted: "+topicName);
+        }else{
+            console.error("Error deleting topic");
+        }
+    });
+}
+
 function hideAllContentExcept( ex ){
     const allDivs=["topics","partitions","brokers","schema","cgroups","acls","nodes"];
     for (let i = 0; i < allDivs.length; i++) {
@@ -97,17 +114,38 @@ $( document ).ready(function() {
     <div class="column right" style="background-color:#ffffff;">
 
         <div id="topics">
-            Kafka topics: <br>
-            <ul>
-                {#for item in info:kafkaInfos.topics} 
-                  <li>
-                    Topic: {item} 
-                  </li>
-                {/for}
-            </ul>
+            <table class="table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">Topic Name</th>
+                        <th scope="col">Id</th>
+                        <th scope="col">Nubmer of msg</th>
+                        <th scope="col">Control</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#for item in info:kafkaInfos.topics} 
+                     <tr id="tr-{item.name}">
+                       <td>
+                         {item.name} 
+                       </td>
+                       <td>
+                         {item.topicId} 
+                       </td>
+                       <td>
+                           {item.nmsg}
+                       </td>
+                       <td>
+                         <button class="link" onclick="deleteTopic('{item.name}')">Delete</button>  
+                       </td>
+                     </tr> 
+                    {/for}           
+                </tbody>
+            </table>
             <hr>
             <input type="text" name="key" value="new_topic" id="create_topic">
             <button class="btn btn-primary btn-sm" onclick="createTopic()">Create topic</button>
+
         </div>     
         
         <div id="partitions">
