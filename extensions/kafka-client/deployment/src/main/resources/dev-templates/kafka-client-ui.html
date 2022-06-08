@@ -107,7 +107,7 @@ $( document ).ready(function() {
         <p><button class="link" onclick="show('schema')">Schema registry</button></p>
         <p><button class="link" onclick="show('cgroups')">Consumer groups</button></p>
         <p><button class="link" onclick="show('acls')">Access control list</button></p>
-        <p><button class="link" onclick="show('nodes')">Nodes</button></p>
+        <p><button class="link" onclick="show('nodes')">Cluster Nodes</button></p>
     </div>
     
     <div class="column right" style="background-color:#ffffff;">
@@ -143,17 +143,17 @@ $( document ).ready(function() {
         
         <div id="partitions">
             Partitions<br>
-            Blalalala
+            TBD
         </div>
         
         <div id="brokers">
             Кafka broker: {info:kafkaInfos.broker} <br><br>
-            Blalalala
+            TBD
         </div>
         
         <div id="schema">
             Schema<br>
-            Blalalala
+            TBD
         </div> 
         
         <div id="cgroups">
@@ -185,18 +185,32 @@ $( document ).ready(function() {
         
         <div id="acls">
             ACL<br>
-            Blalalala
+            TBD
         </div>
         
         <div id="nodes">
-            Kafka nodes: <br>
-            <ul>
-                {#for item in info:kafkaInfos.nodes} 
-                <li>
-                    Node: {item} 
-                </li>
-                {/for}
-            </ul>
+            Kafka cluster id:{info:kafkaInfos.clusterInfo.id} <br> 
+            Cluster controller node: {info:kafkaInfos.clusterInfo.controller.host}:{info:kafkaInfos.clusterInfo.controller.port} <br>
+            ACL operations: {info:kafkaInfos.clusterInfo.aclOperations}
+            <h3>Cluster nodes</h3>
+            <table class="table" id="cluster-table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">Id</th>
+                        <th scope="col">host</th>
+                        <th scope="col">port</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {#for item in info:kafkaInfos.clusterInfo.nodes} 
+                    <tr>
+                        <td>{item.id}</td>
+                        <td>{item.host}</td>
+                        <td>{item.port}</td>
+                    </tr>
+                     {/for}
+                </tbody>
+            </table>
         </div>
 
     </div>

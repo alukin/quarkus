@@ -15,9 +15,9 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicListing;
-import org.apache.kafka.common.Node;
 import org.jboss.logging.Logger;
 
 import io.smallrye.common.annotation.Identifier;
@@ -26,6 +26,7 @@ import io.smallrye.common.annotation.Identifier;
 public class KafkaAdminClient {
 
     private static final Logger LOGGER = Logger.getLogger(KafkaAdminClient.class);
+
     @Inject
     @Identifier("default-kafka-broker")
     private Map<String, Object> config;
@@ -48,8 +49,9 @@ public class KafkaAdminClient {
         return client;
     }
 
-    public Collection<Node> getClusterNodes() throws ExecutionException, InterruptedException {
-        return client.describeCluster().nodes().get();
+    public DescribeClusterResult getCluster() throws ExecutionException, InterruptedException {
+        DescribeClusterResult dcr = client.describeCluster();
+        return dcr;
     }
 
     public Collection<TopicListing> getTopics() throws InterruptedException, ExecutionException {
