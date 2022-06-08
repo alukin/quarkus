@@ -32,7 +32,7 @@ public class KafkaHealthCheck implements HealthCheck {
         HealthCheckResponseBuilder builder = HealthCheckResponse.named("Kafka connection health check").up();
         try {
             StringBuilder nodes = new StringBuilder();
-            for (Node node : kafkaAdminClient.getClusterNodes()) {
+            for (Node node : kafkaAdminClient.getCluster().nodes().get()) {
                 if (nodes.length() > 0) {
                     nodes.append(',');
                 }
