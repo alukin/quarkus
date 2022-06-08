@@ -97,11 +97,11 @@ $( document ).ready(function() {
 {#title}Kafka dev UI{/title}
 {#body}
 
-<div class="row" style="background-color:#005fff; color:#ffffff">
-    <h3>Kafka dev UI</h3>
-</div>
+<!--<div class="row" style="background-color:#005fff; color:#ffffff">  
+</div>-->
 <div class="row">
     <div class="column left" style="background-color:#005fff; color:#ffffff">
+         <h3>Kafka dev UI</h3>
         <p><button class="link" onclick="show('topics')">Topics</button></p>
         <p><button class="link" onclick="show('partitions')">Partitions</button></p>
         <p><button class="link" onclick="show('brokers')">Brokers</button></p>
@@ -114,7 +114,7 @@ $( document ).ready(function() {
     <div class="column right" style="background-color:#ffffff;">
 
         <div id="topics">
-            <table class="table">
+            <table class="table" id="topics-table">
                 <thead class="thead-dark">
                     <tr>
                         <th scope="col">Topic Name</th>
@@ -125,16 +125,10 @@ $( document ).ready(function() {
                 </thead>
                 <tbody>
                     {#for item in info:kafkaInfos.topics} 
-                     <tr id="tr-{item.name}">
-                       <td>
-                         {item.name} 
-                       </td>
-                       <td>
-                         {item.topicId} 
-                       </td>
-                       <td>
-                           {item.nmsg}
-                       </td>
+                     <tr id="ttr-{item.name}">
+                       <td>{item.name}</td>
+                       <td>{item.topicId}</td>
+                       <td>{item.nmsg}</td>
                        <td>
                          <button class="link" onclick="deleteTopic('{item.name}')">Delete</button>  
                        </td>
@@ -143,9 +137,9 @@ $( document ).ready(function() {
                 </tbody>
             </table>
             <hr>
-            <input type="text" name="key" value="new_topic" id="create_topic">
-            <button class="btn btn-primary btn-sm" onclick="createTopic()">Create topic</button>
-
+                <input type="text" name="key" value="new_topic" id="create_topic">
+                <button class="btn btn-primary btn-sm" onclick="createTopic()">Create topic</button>
+            <hr>
         </div>     
         
         <div id="partitions">
@@ -164,14 +158,30 @@ $( document ).ready(function() {
         </div> 
         
         <div id="cgroups">
-            Kafka consumer gropus: <br>
-            <ul>
+            <table class="table" id="cgropus-table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">State</th>
+                        <th scope="col">Id</th>
+                        <th scope="col">Coordinator</th>
+                        <th scope="col">Protocol</th>
+                        <th scope="col">Members</th>
+                        <th scope="col">Lag(Sum)</th>
+                    </tr>
+                </thead>
+                <tbody>
                 {#for item in info:kafkaInfos.consumerGroups} 
-                <li>
-                    Topic: {item} 
-                </li>
+                 <tr id="ctr-{item.name}"> 
+                     <td>{item.state}</td>
+                     <td>{item.name}</td>
+                     <td>{item.coordinator}</td>
+                     <td>{item.protocol}</td>
+                     <td>{item.members}</td>
+                     <td>{item.lag}</td>
+                 </tr>
                 {/for}
-            </ul>
+                </tbody>
+            </table>
         </div>
         
         <div id="acls">
