@@ -13,8 +13,8 @@ import org.apache.kafka.common.acl.AclOperation;
 import org.jboss.logging.Logger;
 
 import io.quarkus.arc.Arc;
-import io.quarkus.kafka.client.runtime.devconsole.model.ClusterInfo;
-import io.quarkus.kafka.client.runtime.devconsole.model.ConsumerGroup;
+import io.quarkus.kafka.client.runtime.devconsole.model.KafkaClusterInfo;
+import io.quarkus.kafka.client.runtime.devconsole.model.KafkaConsumerGroup;
 import io.quarkus.kafka.client.runtime.devconsole.model.KafkaInfo;
 import io.quarkus.kafka.client.runtime.devconsole.model.KafkaNode;
 import io.quarkus.kafka.client.runtime.devconsole.model.KafkaTopic;
@@ -34,7 +34,7 @@ public class KafkaInfoSupplier implements Supplier<KafkaInfo> {
                 ki.topics.add(kafkaTopic(tl));
             }
             for (ConsumerGroupListing cgl : kafkaAdminClient.getConsumerGroups()) {
-                ConsumerGroup cg = new ConsumerGroup();
+                KafkaConsumerGroup cg = new KafkaConsumerGroup();
                 cg.name = cgl.groupId();
                 cg.state = cgl.state().orElse(ConsumerGroupState.EMPTY).name();
                 ki.consumerGroups.add(cg);
@@ -63,8 +63,8 @@ public class KafkaInfoSupplier implements Supplier<KafkaInfo> {
         return kn;
     }
 
-    private ClusterInfo clusterInfo(DescribeClusterResult dcr) throws InterruptedException, ExecutionException {
-        ClusterInfo ci = new ClusterInfo();
+    private KafkaClusterInfo clusterInfo(DescribeClusterResult dcr) throws InterruptedException, ExecutionException {
+        KafkaClusterInfo ci = new KafkaClusterInfo();
         ci.id = dcr.clusterId().get();
         ci.controller = kafkaNode(dcr.controller().get());
         for (Node n : dcr.nodes().get()) {

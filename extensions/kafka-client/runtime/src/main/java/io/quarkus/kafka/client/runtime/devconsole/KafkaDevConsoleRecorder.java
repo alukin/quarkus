@@ -3,6 +3,8 @@ package io.quarkus.kafka.client.runtime.devconsole;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.arc.Arc;
 import io.quarkus.devconsole.runtime.spi.DevConsolePostHandler;
@@ -20,6 +22,9 @@ public class KafkaDevConsoleRecorder {
 
     public Handler<RoutingContext> kafkaControlHandler() {
         return new DevConsolePostHandler() {
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
             @Override
             protected void handlePost(RoutingContext event, MultiMap form) throws Exception {
                 String action = form.get("action");
@@ -32,7 +37,7 @@ public class KafkaDevConsoleRecorder {
                     res = adminClient.createTopic(key);
                 } else if ("deleteTopic".equals(action)) {
                     res = adminClient.deleteTopic(key);
-                } else if ("topicMesssages".equals(action)) {
+                } else if ("topicMessages".equals(action)) {
                     message = readTopic(key, value);
                 } else {
                     res = false;
@@ -59,6 +64,8 @@ public class KafkaDevConsoleRecorder {
             }
 
             private String readTopic(String topicName, String offset) {
+                System.out.println(
+                        "=============Reading topic: " + topicName + " offset: " + offset + " ObjectMapper " + objectMapper);
                 return "";
             }
         };
