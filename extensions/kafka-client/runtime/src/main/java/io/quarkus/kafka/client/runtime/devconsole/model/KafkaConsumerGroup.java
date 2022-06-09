@@ -1,6 +1,6 @@
 package io.quarkus.kafka.client.runtime.devconsole.model;
 
-public class ConsumerGroup {
+public class KafkaConsumerGroup {
     public String name;
     public String state;
     public String coordinator;

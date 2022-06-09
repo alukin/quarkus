@@ -67,7 +67,7 @@ function deleteTopic(topicName){
 }
 
 function hideAllContentExcept( ex ){
-    const allDivs=["topics","partitions","brokers","schema","cgroups","acls","nodes"];
+    const allDivs=["topics","partitions","schema","cgroups","acls","nodes","topicmsg"];
     for (let i = 0; i < allDivs.length; i++) {
         var ename = allDivs[i]; 
         var d = document.getElementById(ename);
@@ -87,6 +87,24 @@ function show(id){
     hideAllContentExcept(id);
 }
 
+function topicMessages(topicName){
+    hideAllContentExcept("topicmsg");
+     $.post("",
+        {
+            action: "topicMessages",
+            key: topicName,
+            value: "0"
+        },
+        function(data, status){
+            if(status === "success"){
+            console.log("Topic messages OK: "+topicName);
+            //TODO: put data into the table
+        }else{
+            console.error("Error getting topic messages");
+        }
+    });   
+}
+
 $( document ).ready(function() {
     hideAllContentExcept("topics");
 });
@@ -103,7 +121,6 @@ $( document ).ready(function() {
          <h3>Kafka dev UI</h3>
         <p><button class="link" onclick="show('topics')">Topics</button></p>
         <p><button class="link" onclick="show('partitions')">Partitions</button></p>
-        <p><button class="link" onclick="show('brokers')">Brokers</button></p>
         <p><button class="link" onclick="show('schema')">Schema registry</button></p>
         <p><button class="link" onclick="show('cgroups')">Consumer groups</button></p>
         <p><button class="link" onclick="show('acls')">Access control list</button></p>
@@ -129,7 +146,9 @@ $( document ).ready(function() {
                        <td>{item.topicId}</td>
                        <td>{item.nmsg}</td>
                        <td>
-                         <button class="link" onclick="deleteTopic('{item.name}')">Delete</button>  
+                           <button class="link" onclick="deleteTopic('{item.name}')">Delete</button>
+                           &nbsp; &nbsp;
+                           <button class="link" onclick="topicMessages('{item.name}')">Messages</button>
                        </td>
                      </tr> 
                     {/for}           
@@ -140,14 +159,25 @@ $( document ).ready(function() {
                 <button class="btn btn-primary btn-sm" onclick="createTopic()">Create topic</button>
             <hr>
         </div>     
-        
+        <div id="topicmsg">
+            <h3>Topic messages</h3>
+            <table class="table" id="msg-table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">Offset</th>
+                        <th scope="col">Partition</th>
+                        <th scope="col">Timestamp</th>
+                        <th scope="col">Key</th>
+                        <th scope="col">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr></tr><!-- just empty row to be replaced by jQery fn -->
+                </tbody>
+            </table>
+        </div>    
         <div id="partitions">
             Partitions<br>
-            TBD
-        </div>
-        
-        <div id="brokers">
-            Кafka broker: {info:kafkaInfos.broker} <br><br>
             TBD
         </div>
         
@@ -189,9 +219,9 @@ $( document ).ready(function() {
         </div>
         
         <div id="nodes">
-            Kafka cluster id:{info:kafkaInfos.clusterInfo.id} <br> 
-            Cluster controller node: {info:kafkaInfos.clusterInfo.controller.host}:{info:kafkaInfos.clusterInfo.controller.port} <br>
-            ACL operations: {info:kafkaInfos.clusterInfo.aclOperations}
+            <b>Kafka cluster id:</b> {info:kafkaInfos.clusterInfo.id} <br> 
+            <b>Cluster controller node:</b> {info:kafkaInfos.clusterInfo.controller.host}:{info:kafkaInfos.clusterInfo.controller.port} <br>
+            <b>ACL operations:</b> {info:kafkaInfos.clusterInfo.aclOperations}
             <h3>Cluster nodes</h3>
             <table class="table" id="cluster-table">
                 <thead class="thead-dark">
