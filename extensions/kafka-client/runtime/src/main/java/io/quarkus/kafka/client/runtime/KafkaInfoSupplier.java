@@ -27,7 +27,7 @@ public class KafkaInfoSupplier implements Supplier<KafkaInfo> {
     public KafkaInfo get() {
         KafkaAdminClient kafkaAdminClient = kafkaAdminClient();
         KafkaInfo ki = new KafkaInfo();
-
+        LOGGER.debug("=========== Calling KafkaInfoSupplier =============");
         try {
             ki.clusterInfo = clusterInfo(kafkaAdminClient.getCluster());
             for (TopicListing tl : kafkaAdminClient.getTopics()) {
