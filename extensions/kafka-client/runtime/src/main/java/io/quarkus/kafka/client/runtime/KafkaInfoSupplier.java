@@ -25,9 +25,9 @@ public class KafkaInfoSupplier implements Supplier<KafkaInfo> {
 
     @Override
     public KafkaInfo get() {
+        LOGGER.info("========================= Calling KafkaInfoSupplier ==========================");
         KafkaAdminClient kafkaAdminClient = kafkaAdminClient();
         KafkaInfo ki = new KafkaInfo();
-        LOGGER.debug("=========== Calling KafkaInfoSupplier =============");
         try {
             ki.clusterInfo = clusterInfo(kafkaAdminClient.getCluster());
             for (TopicListing tl : kafkaAdminClient.getTopics()) {
@@ -44,6 +44,7 @@ public class KafkaInfoSupplier implements Supplier<KafkaInfo> {
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
+        LOGGER.info("========================= Call end of KafkaInfoSupplier ==========================");
         return ki;
     }
 

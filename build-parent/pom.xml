@@ -23,13 +23,13 @@
         <kotlin.version>1.6.21</kotlin.version>
         <dokka.version>1.6.21</dokka.version>
         <scala.version>2.13.8</scala.version>
-        <scala-maven-plugin.version>4.6.1</scala-maven-plugin.version>
+        <scala-maven-plugin.version>4.6.2</scala-maven-plugin.version>
         <!-- not pretty but this is used in the codestarts and we don't want to break compatibility -->
         <scala-plugin.version>${scala-maven-plugin.version}</scala-plugin.version>
 
         <!-- version.* properties are defined in jboss-parent and are overridden/updated here: -->
         <version.enforcer.plugin>3.0.0-M3</version.enforcer.plugin>
-        <version.surefire.plugin>3.0.0-M5</version.surefire.plugin>
+        <version.surefire.plugin>3.0.0-M7</version.surefire.plugin>
         <version.exec.plugin>3.0.0</version.exec.plugin>
         <failsafe-plugin.version>${version.surefire.plugin}</failsafe-plugin.version>
 
@@ -42,7 +42,7 @@
         <graal-sdk.version-for-documentation>22.1.0</graal-sdk.version-for-documentation>
         <mandrel.version-for-documentation>22.1</mandrel.version-for-documentation>
 
-        <asciidoctorj.version>2.5.3</asciidoctorj.version>
+        <asciidoctorj.version>2.5.4</asciidoctorj.version>
         <htmlunit.version>2.40.0</htmlunit.version>
         <javaparser-core.version>3.24.2</javaparser-core.version>
         <jdeparser.version>2.0.3.Final</jdeparser.version>
@@ -89,13 +89,13 @@
         <opensearch.protocol>http</opensearch.protocol>
 
         <!-- Database images for JDBC/Reactive/Hibernate tests and devservices -->
-        <postgres.image>docker.io/postgres:14.2</postgres.image>
-        <mariadb.image>docker.io/mariadb:10.7</mariadb.image>
+        <postgres.image>docker.io/postgres:14</postgres.image>
+        <mariadb.image>docker.io/mariadb:10.6</mariadb.image>
         <db2.image>docker.io/ibmcom/db2:11.5.7.0a</db2.image>
-        <mssql.image>mcr.microsoft.com/mssql/server:2019-CU15-ubuntu-20.04</mssql.image>
+        <mssql.image>mcr.microsoft.com/mssql/server:2019-latest</mssql.image>
         <mysql.image>docker.io/mysql:8.0</mysql.image>
         <oracle.image>docker.io/gvenzl/oracle-xe:21-slim</oracle.image>
-        <mongo.image>docker.io/mongo:4.4.13</mongo.image>
+        <mongo.image>docker.io/mongo:4.4</mongo.image>
 
         <!-- Align various dependencies that are not really part of the bom-->
         <junit4.version>4.13.2</junit4.version>
@@ -415,8 +415,6 @@
                         <!-- limit the amount of memory surefire can use, 1500m should be plenty-->
                         <!-- set tmpdir as early as possible because surefire sets it too late for JDK16 -->
                         <argLine>${jacoco.agent.argLine} -Xmx1500m -XX:MaxMetaspaceSize=1500m -Djava.io.tmpdir="${project.build.directory}" ${surefire.argLine.additional}</argLine>
-                        <!-- https://lists.apache.org/thread.html/r9030808273c82ac6d7b9602d34d446c7d8c4e8aa02c41bca164df1c5%40%3Cdev.maven.apache.org%3E -->
-                        <trimStackTrace>false</trimStackTrace>
                         <excludedEnvironmentVariables>MAVEN_OPTS</excludedEnvironmentVariables>
                     </configuration>
                 </plugin>
@@ -435,8 +433,6 @@
                         </systemPropertyVariables>
                         <!-- set tmpdir as early as possible because failsafe sets it too late for JDK16 -->
                         <argLine>-Djava.io.tmpdir="${project.build.directory}"</argLine>
-                        <!-- https://lists.apache.org/thread.html/r9030808273c82ac6d7b9602d34d446c7d8c4e8aa02c41bca164df1c5%40%3Cdev.maven.apache.org%3E -->
-                        <trimStackTrace>false</trimStackTrace>
                         <excludedEnvironmentVariables>MAVEN_OPTS</excludedEnvironmentVariables>
                     </configuration>
                 </plugin>
@@ -1241,12 +1237,17 @@
             <properties>
                 <!-- Podman compatibility. Currently, mac file systems based on Plan 9 does not support SELinux labeling z and Z should not be used. When they transition to use virtiofsd, it should support SELinux labeling, and then we can use it for better container separation on the Mac.-->
                 <volume.access.modifier></volume.access.modifier>
-                
+
                 <!-- See https://stackoverflow.com/questions/65456814/docker-apple-silicon-m1-preview-mysql-no-matching-manifest-for-linux-arm64-v8
                 and https://www.emmanuelgautier.com/blog/mysql-docker-arm-m1
                 This hopefully should be temporary -->
                 <mysql.image>arm64v8/mysql:8-oracle</mysql.image>
 
+                <!-- See
+                https://github.com/microsoft/mssql-docker/issues/668 and https://stackoverflow.com/questions/65398641/docker-connect-sql-server-container-non-zero-code-1/66919852#66919852.
+                The MS SQL image segfaults on ARM. Azure Edge is not fully compatible, but it is better than not running the tests at all.
+                DockerHub does not list any tags so we have to use latest for the moment.-->
+                <mssql.image>mcr.microsoft.com/azure-sql-edge:latest</mssql.image>
             </properties>
         </profile>
 
