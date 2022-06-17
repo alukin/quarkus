@@ -9,6 +9,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.arc.Arc;
 import io.quarkus.devconsole.runtime.spi.DevConsolePostHandler;
 import io.quarkus.kafka.client.runtime.KafkaAdminClient;
+import io.quarkus.kafka.client.runtime.KafkaWebUiUtils;
 import io.quarkus.runtime.annotations.Recorder;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
@@ -30,17 +31,28 @@ public class KafkaDevConsoleRecorder {
                 String action = form.get("action");
                 String key = form.get("key");
                 String value = form.get("value");
+
                 KafkaAdminClient adminClient = kafkaAdminClient();
+                KafkaWebUiUtils webUtils = kafkaWebUiUtils();
+                
                 String message = "OK";
                 boolean res = true;
-                if ("createTopic".equals(action)) {
-                    res = adminClient.createTopic(key);
-                } else if ("deleteTopic".equals(action)) {
-                    res = adminClient.deleteTopic(key);
-                } else if ("topicMessages".equals(action)) {
-                    message = readTopic(key, value);
-                } else {
+                if (null == action) {
                     res = false;
+                } else switch (action) {
+                    case "createTopic":
+                        res = adminClient.createTopic(key);
+                        break;
+                    case "deleteTopic":
+                        res = adminClient.deleteTopic(key);
+                        message = webUtils.toJson(webUtils.getTopics());
+                        break;
+                    case "topicMessages":
+                        message = readTopic(key, value);
+                        break;
+                    default:
+                        res = false;
+                        break;
                 }
                 if (res) {
                     endResponse(event, OK, message);
@@ -61,6 +73,10 @@ public class KafkaDevConsoleRecorder {
 
             private KafkaAdminClient kafkaAdminClient() {
                 return Arc.container().instance(KafkaAdminClient.class).get();
+            }
+            
+            private KafkaWebUiUtils kafkaWebUiUtils(){
+                return Arc.container().instance(KafkaWebUiUtils.class).get();
             }
 
             private String readTopic(String topicName, String offset) {
