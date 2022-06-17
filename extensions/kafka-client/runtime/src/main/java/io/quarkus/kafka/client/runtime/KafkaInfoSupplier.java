@@ -7,7 +7,7 @@ import org.jboss.logging.Logger;
 
 import io.quarkus.arc.Arc;
 import io.quarkus.kafka.client.runtime.devconsole.model.KafkaInfo;
-
+//TODO: remove this, use just POST handler
 public class KafkaInfoSupplier implements Supplier<KafkaInfo> {
 
     private static final Logger LOGGER = Logger.getLogger(KafkaInfoSupplier.class);
