@@ -393,6 +393,7 @@ public class KafkaProcessor {
                 .setUnremovable()
                 .build();
     }
+
     //TODO: make configurable
     @BuildStep
     public AdditionalBeanBuildItem kafkaAdminClient() {
