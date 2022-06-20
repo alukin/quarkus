@@ -1,9 +1,11 @@
 package io.quarkus.kafka.client.runtime;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import javax.inject.Singleton;
 
@@ -17,21 +19,25 @@ import org.apache.kafka.common.acl.AclOperation;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.quarkus.kafka.client.runtime.devconsole.model.KafkaClusterInfo;
-import io.quarkus.kafka.client.runtime.devconsole.model.KafkaConsumerGroup;
-import io.quarkus.kafka.client.runtime.devconsole.model.KafkaInfo;
-import io.quarkus.kafka.client.runtime.devconsole.model.KafkaNode;
-import io.quarkus.kafka.client.runtime.devconsole.model.KafkaTopic;
+import io.quarkus.kafka.client.runtime.converter.KafkaModelConverter;
+import io.quarkus.kafka.client.runtime.devconsole.model.*;
 
 @Singleton
 public class KafkaWebUiUtils {
 
     private final KafkaAdminClient kafkaAdminClient;
+
+    private final KafkaTopicClient kafkaTopicClient;
     private final ObjectMapper objectMapper;
 
-    public KafkaWebUiUtils(KafkaAdminClient kafkaAdminClient, ObjectMapper objectMapper) {
+    private final KafkaModelConverter modelConverter;
+
+    public KafkaWebUiUtils(KafkaAdminClient kafkaAdminClient, KafkaTopicClient kafkaTopicClient, ObjectMapper objectMapper,
+            KafkaModelConverter modelConverter) {
         this.kafkaAdminClient = kafkaAdminClient;
+        this.kafkaTopicClient = kafkaTopicClient;
         this.objectMapper = objectMapper;
+        this.modelConverter = modelConverter;
     }
 
     public KafkaInfo getKafkaInfo() throws ExecutionException, InterruptedException {
@@ -111,5 +117,13 @@ public class KafkaWebUiUtils {
             ci.aclOperations = "NONE";
         }
         return ci;
+    }
+
+    public Collection<KafkaMessage> getTopicMessages(String topicId, Order order,
+            List<Integer> requestedPartitions, long offset,
+            long pageSizePerPartition) throws ExecutionException, InterruptedException {
+        return kafkaTopicClient.getTopicMessages(topicId, order, requestedPartitions, offset, pageSizePerPartition).stream()
+                .map(modelConverter::convert)
+                .collect(Collectors.toList());
     }
 }
