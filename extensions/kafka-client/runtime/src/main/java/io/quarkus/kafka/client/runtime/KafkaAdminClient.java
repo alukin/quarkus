@@ -64,7 +64,7 @@ public class KafkaAdminClient {
     }
 
     public boolean deleteTopic(String name) {
-        LOGGER.debug("Dleting kafka topic with ID: " + name);
+        LOGGER.debug("Deleting kafka topic with ID: " + name);
         Collection<String> topics = new ArrayList<>();
         topics.add(name);
         DeleteTopicsResult dtr = client.deleteTopics(topics);

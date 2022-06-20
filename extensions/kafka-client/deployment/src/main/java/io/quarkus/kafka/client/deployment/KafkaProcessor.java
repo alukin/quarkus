@@ -82,11 +82,8 @@ import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildI
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 import io.quarkus.deployment.logging.LogCleanupFilterBuildItem;
 import io.quarkus.deployment.pkg.NativeConfig;
-import io.quarkus.kafka.client.runtime.KafkaAdminClient;
-import io.quarkus.kafka.client.runtime.KafkaBindingConverter;
-import io.quarkus.kafka.client.runtime.KafkaRecorder;
-import io.quarkus.kafka.client.runtime.KafkaRuntimeConfigProducer;
-import io.quarkus.kafka.client.runtime.KafkaWebUiUtils;
+import io.quarkus.kafka.client.runtime.*;
+import io.quarkus.kafka.client.runtime.converter.KafkaModelConverter;
 import io.quarkus.kafka.client.serialization.JsonbDeserializer;
 import io.quarkus.kafka.client.serialization.JsonbSerializer;
 import io.quarkus.kafka.client.serialization.ObjectMapperDeserializer;
@@ -391,6 +388,23 @@ public class KafkaProcessor {
     public AdditionalBeanBuildItem kafkaAdminClient() {
         return AdditionalBeanBuildItem.builder()
                 .addBeanClass(KafkaAdminClient.class)
+                .setUnremovable()
+                .build();
+    }
+
+    @BuildStep
+    public AdditionalBeanBuildItem kafkaConverter() {
+        return AdditionalBeanBuildItem.builder()
+                .addBeanClass(KafkaModelConverter.class)
+                .setUnremovable()
+                .build();
+    }
+
+    //TODO: make configurable
+    @BuildStep
+    public AdditionalBeanBuildItem kafkaTopicClient() {
+        return AdditionalBeanBuildItem.builder()
+                .addBeanClass(KafkaTopicClient.class)
                 .setUnremovable()
                 .build();
     }
