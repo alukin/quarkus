@@ -15,6 +15,7 @@ import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.DeleteTopicsResult;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.admin.TopicListing;
@@ -62,18 +63,12 @@ public class KafkaAdminClient {
         return client.listConsumerGroups().all().get();
     }
 
-    public Collection<String> getTopicMessages(String topicId) {
-        ArrayList<String> result = new ArrayList<>();
-        //TODO: pool specific topic
-        return result;
-    }
-
     public boolean deleteTopic(String name) {
         LOGGER.debug("Dleting kafka topic with ID: " + name);
         Collection<String> topics = new ArrayList<>();
         topics.add(name);
-        client.deleteTopics(topics);
-        return false;
+        DeleteTopicsResult dtr = client.deleteTopics(topics);
+        return dtr.topicNameValues() != null;
     }
 
     public boolean createTopic(String name) {
@@ -81,16 +76,9 @@ public class KafkaAdminClient {
         ArrayList<NewTopic> newTopics = new ArrayList<>();
         NewTopic nt = new NewTopic(name, 1, (short) 1);
         newTopics.add(nt);
-        CreateTopicsResult tr = client.createTopics(newTopics);
+        CreateTopicsResult ctr = client.createTopics(newTopics);
         boolean res = true;
-        try {
-            res = tr.all().get() != null;
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-        } catch (ExecutionException ex) {
-            LOGGER.warn("Can not create Kafka topic {}", name, ex);
-            res = false;
-        }
+        res = ctr.values() != null;
         return res;
     }
 }
