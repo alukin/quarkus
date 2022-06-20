@@ -135,7 +135,7 @@
         <jboss-logging.version>3.5.0.Final</jboss-logging.version>
         <mutiny.version>1.5.0</mutiny.version>
         <kafka3.version>3.1.0</kafka3.version>
-        <lz4.version>1.8.0</lz4.version> <!-- dependency of the kafka-clients that could be overriden by other imported BOMs in the platform -->
+        <lz4.version>1.8.0</lz4.version> <!-- dependency of the kafka-clients that could be overridden by other imported BOMs in the platform -->
         <snappy.version>1.1.8.4</snappy.version>
         <strimzi-test-container.version>0.100.0</strimzi-test-container.version>
         <!-- Scala is used by Kafka so we need to choose a compatible version -->
@@ -157,8 +157,8 @@
         <liquibase.version>4.11.0</liquibase.version>
         <snakeyaml.version>1.30</snakeyaml.version>
         <osgi.version>6.0.0</osgi.version>
-        <mongo-client.version>4.3.4</mongo-client.version>
-        <mongo-crypt.version>1.2.1</mongo-crypt.version>
+        <mongo-client.version>4.6.1</mongo-client.version>
+        <mongo-crypt.version>1.4.0</mongo-crypt.version>
         <proton-j.version>0.33.10</proton-j.version>
         <javaparser.version>3.24.2</javaparser.version>
         <okhttp.version>3.14.9</okhttp.version>
@@ -386,6 +386,15 @@
                 <version>${google-http-client.version}</version>
                 <scope>import</scope>
                 <type>pom</type>
+            </dependency>
+
+            <!-- Kotlin BOM -->
+            <dependency>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-bom</artifactId>
+                <version>${kotlin.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
             <!-- Kotlin Coroutines BOM -->
@@ -5071,36 +5080,6 @@
                 <version>${smallrye-reactive-types-converter.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-compiler</artifactId>
-                <version>${kotlin.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-stdlib</artifactId>
-                <version>${kotlin.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-stdlib-jdk7</artifactId>
-                <version>${kotlin.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-stdlib-jdk8</artifactId>
-                <version>${kotlin.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-stdlib-common</artifactId>
-                <version>${kotlin.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jetbrains.kotlin</groupId>
-                <artifactId>kotlin-reflect</artifactId>
-                <version>${kotlin.version}</version>
-            </dependency>
             <dependency>
                 <groupId>org.jetbrains.kotlinx</groupId>
                 <artifactId>kotlinx-serialization-json</artifactId>
