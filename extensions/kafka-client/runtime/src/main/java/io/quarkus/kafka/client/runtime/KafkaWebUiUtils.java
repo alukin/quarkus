@@ -77,6 +77,7 @@ public class KafkaWebUiUtils {
         try {
             res = objectMapper.writeValueAsString(o);
         } catch (JsonProcessingException ex) {
+            //FIXME:
             res = "";
         }
         return res;
@@ -125,5 +126,9 @@ public class KafkaWebUiUtils {
         return kafkaTopicClient.getTopicMessages(topicId, order, requestedPartitions, offset, pageSizePerPartition).stream()
                 .map(modelConverter::convert)
                 .collect(Collectors.toList());
+    }
+
+    public void createMessage(KafkaMessageCreateRequest request) {
+        kafkaTopicClient.createMessage(request);
     }
 }
