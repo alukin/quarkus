@@ -15,12 +15,18 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.serialization.BytesDeserializer;
+import org.apache.kafka.common.serialization.BytesSerializer;
 import org.apache.kafka.common.utils.Bytes;
 import org.jboss.logging.Logger;
 
+import io.quarkus.kafka.client.runtime.devconsole.model.KafkaMessageCreateRequest;
 import io.quarkus.kafka.client.runtime.devconsole.model.Order;
 import io.smallrye.common.annotation.Identifier;
 
@@ -57,6 +63,18 @@ public class KafkaTopicClient {
                 .map(p -> new TopicPartition(topicId, p))
                 .collect(Collectors.toList()));
         return consumer;
+    }
+
+    private Producer<Bytes, Bytes> createProducer() {
+        Map<String, Object> config = new HashMap<>(this.config);
+
+        config.put(ProducerConfig.CLIENT_ID_CONFIG, "KafkaExampleProducer");
+        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                BytesSerializer.class.getName());
+        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                BytesSerializer.class.getName());
+
+        return new KafkaProducer<>(config);
     }
 
     /**
@@ -126,6 +144,21 @@ public class KafkaTopicClient {
             throw new IllegalArgumentException(String.format(
                     "Requested messages from partition, that do not exist. Requested partitions: %s. Existing partitions: %s",
                     requestedPartitions, topicPartitions));
+        }
+    }
+
+    public void createMessage(KafkaMessageCreateRequest request) {
+        var record = new ProducerRecord<>(
+                request.getTopic(),
+                request.getPartition(),
+                Bytes.wrap(request.getKey().getBytes()),
+                Bytes.wrap(request.getValue().getBytes())//,
+                //TODO: support headers
+                //request.getHeaders
+                );
+
+        try (var consumer = createProducer()) {
+            consumer.send(record);
         }
     }
 }
