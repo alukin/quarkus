@@ -145,4 +145,8 @@ public class KafkaWebUiUtils {
     public Collection<Integer> partitions(String topicName) throws ExecutionException, InterruptedException {
         return kafkaTopicClient.partitions(topicName);
     }
+
+    public void createMessage(KafkaMessageCreateRequest request) {
+        kafkaTopicClient.createMessage(request);
+    }
 }
