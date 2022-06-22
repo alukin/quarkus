@@ -49,7 +49,7 @@ public class KafkaTopicClient {
     }
 
     // We must create a new instance per request, as we might have multiple windows open, each with different pagination, filter and thus different cursor.
-    private Consumer<Bytes, Bytes> createConsumer(String topicId, List<Integer> requestedPartitions)
+    private Consumer<Bytes, Bytes> createConsumer(String topicName, List<Integer> requestedPartitions)
             throws ExecutionException, InterruptedException {
         Map<String, Object> config = new HashMap<>(this.config);
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, BytesDeserializer.class);
@@ -59,8 +59,11 @@ public class KafkaTopicClient {
         config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
         var consumer = new KafkaConsumer<Bytes, Bytes>(config);
+        // FIXME: use local copy
+        if (requestedPartitions.isEmpty())
+            requestedPartitions = partitions(topicName);
         consumer.assign(requestedPartitions.stream()
-                .map(p -> new TopicPartition(topicId, p))
+                .map(p -> new TopicPartition(topicName, p))
                 .collect(Collectors.toList()));
         return consumer;
     }
@@ -125,22 +128,13 @@ public class KafkaTopicClient {
         return result;
     }
 
-    private void assertRequestedPartitionsExist(String topicId, List<Integer> requestedPartitions)
+    private void assertRequestedPartitionsExist(String topicName, List<Integer> requestedPartitions)
             throws InterruptedException, ExecutionException {
-        var topicPartitions = adminClient.describeTopics(List.of(topicId))
-                .allTopicNames()
-                .get().values().stream()
-                .reduce((a, b) -> {
-                    throw new IllegalStateException(
-                            "Requested info about single topic, but got result of multiple: " + a + ", " + b);
-                })
-                .orElseThrow(() -> new IllegalStateException(
-                        "Requested info about a topic, but nothing found. Topic id: " + topicId))
-                .partitions().stream()
-                .map(TopicPartitionInfo::partition)
-                .collect(Collectors.toSet());
+        if (requestedPartitions.isEmpty())
+            return;
+        var topicPartitions = partitions(topicName);
 
-        if (!topicPartitions.containsAll(requestedPartitions)) {
+        if (!new HashSet<>(topicPartitions).containsAll(requestedPartitions)) {
             throw new IllegalArgumentException(String.format(
                     "Requested messages from partition, that do not exist. Requested partitions: %s. Existing partitions: %s",
                     requestedPartitions, topicPartitions));
@@ -153,12 +147,27 @@ public class KafkaTopicClient {
                 request.getPartition(),
                 Bytes.wrap(request.getKey().getBytes()),
                 Bytes.wrap(request.getValue().getBytes())//,
-                //TODO: support headers
-                //request.getHeaders
-                );
+        //TODO: support headers
+        //request.getHeaders
+        );
 
         try (var consumer = createProducer()) {
             consumer.send(record);
         }
+    }
+
+    public List<Integer> partitions(String topicName) throws ExecutionException, InterruptedException {
+        return adminClient.describeTopics(List.of(topicName))
+                .allTopicNames()
+                .get().values().stream()
+                .reduce((a, b) -> {
+                    throw new IllegalStateException(
+                            "Requested info about single topic, but got result of multiple: " + a + ", " + b);
+                })
+                .orElseThrow(() -> new IllegalStateException(
+                        "Requested info about a topic, but nothing found. Topic name: " + topicName))
+                .partitions().stream()
+                .map(TopicPartitionInfo::partition)
+                .collect(Collectors.toList());
     }
 }
