@@ -120,15 +120,29 @@ public class KafkaWebUiUtils {
         return ci;
     }
 
-    public Collection<KafkaMessage> getTopicMessages(String topicId, Order order,
+    public Collection<KafkaMessage> getTopicMessages(String topicName, Order order,
             List<Integer> requestedPartitions, long offset,
             long pageSizePerPartition) throws ExecutionException, InterruptedException {
-        return kafkaTopicClient.getTopicMessages(topicId, order, requestedPartitions, offset, pageSizePerPartition).stream()
-                .map(modelConverter::convert)
-                .collect(Collectors.toList());
+        if (requestedPartitions.isEmpty()) {
+
+            return kafkaTopicClient
+                    .getTopicMessages(topicName, order, kafkaTopicClient.partitions(topicName), offset, pageSizePerPartition)
+                    .stream()
+                    .map(modelConverter::convert)
+                    .collect(Collectors.toList());
+        } else {
+            return kafkaTopicClient.getTopicMessages(topicName, order, requestedPartitions, offset, pageSizePerPartition)
+                    .stream()
+                    .map(modelConverter::convert)
+                    .collect(Collectors.toList());
+        }
     }
 
     public void createMessage(KafkaMessageCreateRequest request) {
         kafkaTopicClient.createMessage(request);
+    }
+
+    public Collection<Integer> partitions(String topicName) throws ExecutionException, InterruptedException {
+        return kafkaTopicClient.partitions(topicName);
     }
 }
