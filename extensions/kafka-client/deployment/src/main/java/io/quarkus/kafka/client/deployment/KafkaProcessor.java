@@ -71,9 +71,11 @@ import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.ExtensionSslNativeSupportBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
+import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.LogCategoryBuildItem;
 import io.quarkus.deployment.builditem.RunTimeConfigurationDefaultBuildItem;
 import io.quarkus.deployment.builditem.RuntimeConfigSetupCompleteBuildItem;
+import io.quarkus.deployment.builditem.ShutdownContextBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageProxyDefinitionBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageSecurityProviderBuildItem;
@@ -89,6 +91,9 @@ import io.quarkus.kafka.client.serialization.JsonbSerializer;
 import io.quarkus.kafka.client.serialization.ObjectMapperDeserializer;
 import io.quarkus.kafka.client.serialization.ObjectMapperSerializer;
 import io.quarkus.smallrye.health.deployment.spi.HealthBuildItem;
+import io.quarkus.vertx.http.deployment.NonApplicationRootPathBuildItem;
+import io.quarkus.vertx.http.deployment.RouteBuildItem;
+import io.quarkus.vertx.http.deployment.webjar.WebJarResultsBuildItem;
 
 public class KafkaProcessor {
 
@@ -400,24 +405,6 @@ public class KafkaProcessor {
                 .build();
     }
 
-    //TODO: make configurable
-    @BuildStep
-    public AdditionalBeanBuildItem kafkaTopicClient() {
-        return AdditionalBeanBuildItem.builder()
-                .addBeanClass(KafkaTopicClient.class)
-                .setUnremovable()
-                .build();
-    }
-
-    //TODO: make configurable
-    @BuildStep
-    public AdditionalBeanBuildItem kafkaWebUiUtils() {
-        return AdditionalBeanBuildItem.builder()
-                .addBeanClass(KafkaWebUiUtils.class)
-                .setUnremovable()
-                .build();
-    }
-
     @BuildStep
     public void withSasl(CombinedIndexBuildItem index,
             BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
@@ -497,5 +484,44 @@ public class KafkaProcessor {
                     new ServiceProviderBuildItem("io.quarkus.kubernetes.service.binding.runtime.ServiceBindingConverter",
                             KafkaBindingConverter.class.getName()));
         }
+    }
+
+    // Kafka Dev UI related stuff
+    //TODO: make configurable
+    @BuildStep
+    public AdditionalBeanBuildItem kafkaTopicClient() {
+        return AdditionalBeanBuildItem.builder()
+                .addBeanClass(KafkaTopicClient.class)
+                .setUnremovable()
+                .build();
+    }
+
+    //TODO: make configurable
+    @BuildStep
+    public AdditionalBeanBuildItem kafkaWebUiUtils() {
+        return AdditionalBeanBuildItem.builder()
+                .addBeanClass(KafkaDevUiUtils.class)
+                .setUnremovable()
+                .build();
+    }
+
+    @BuildStep
+    @Record(ExecutionTime.RUNTIME_INIT)
+    public void registerKafkaUiHandler(
+            BuildProducer<RouteBuildItem> routeProducer,
+            KafkaDevUIRecorder recorder,
+            //            Map<String, Object> runtimeConfig,
+            LaunchModeBuildItem launchMode,
+            NonApplicationRootPathBuildItem nonApplicationRootPathBuildItem,
+            KafkaBuildTimeConfig buildConfig,
+            WebJarResultsBuildItem webJarResultsBuildItem,
+            ShutdownContextBuildItem shutdownContext) {
+        if (shouldIncludeDevUi(launchMode, buildConfig)) {
+            System.out.println("====================== registerKafkaUiHandler =======================");
+        }
+    }
+
+    private static boolean shouldIncludeDevUi(LaunchModeBuildItem launchMode, KafkaBuildTimeConfig config) {
+        return launchMode.getLaunchMode().isDevOrTest() || config.devUiEnabled;
     }
 }

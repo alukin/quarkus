@@ -1,4 +1,4 @@
-package io.quarkus.kafka.client.runtime.devconsole.model;
+package io.quarkus.kafka.client.runtime.devui.model;
 
 import java.util.List;
 

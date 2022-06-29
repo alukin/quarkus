@@ -24,6 +24,18 @@ public class KafkaBuildTimeConfig {
     public boolean snappyEnabled;
 
     /**
+     * Whether or not to enable Kafka Dev UI in non-development native mode.
+     */
+    @ConfigItem(name = "devui.enabled", defaultValue = "false")
+    public boolean devUiEnabled;
+
+    /**
+     * Whether or not the Kafka is running in RHOSAKe.
+     */
+    @ConfigItem(name = "rhosak.isUsed", defaultValue = "false")
+    public boolean rhosakIsUsed;
+
+    /**
      * Configuration for DevServices. DevServices allows Quarkus to automatically start Kafka in dev and test mode.
      */
     @ConfigItem

@@ -7,7 +7,7 @@ import javax.inject.Singleton;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.utils.Bytes;
 
-import io.quarkus.kafka.client.runtime.devconsole.model.KafkaMessage;
+import io.quarkus.kafka.client.runtime.devui.model.KafkaMessage;
 
 @Singleton
 public class KafkaModelConverter {
