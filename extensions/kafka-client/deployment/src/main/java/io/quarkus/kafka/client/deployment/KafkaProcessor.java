@@ -92,8 +92,7 @@ import io.quarkus.kafka.client.serialization.ObjectMapperDeserializer;
 import io.quarkus.kafka.client.serialization.ObjectMapperSerializer;
 import io.quarkus.smallrye.health.deployment.spi.HealthBuildItem;
 import io.quarkus.vertx.http.deployment.NonApplicationRootPathBuildItem;
-import io.quarkus.vertx.http.deployment.RouteBuildItem;
-import io.quarkus.vertx.http.deployment.webjar.WebJarResultsBuildItem;
+import io.quarkus.vertx.http.deployment.VertxWebRouterBuildItem;
 
 public class KafkaProcessor {
 
@@ -388,15 +387,6 @@ public class KafkaProcessor {
                 .build();
     }
 
-    //TODO: make configurable
-    @BuildStep
-    public AdditionalBeanBuildItem kafkaAdminClient() {
-        return AdditionalBeanBuildItem.builder()
-                .addBeanClass(KafkaAdminClient.class)
-                .setUnremovable()
-                .build();
-    }
-
     @BuildStep
     public AdditionalBeanBuildItem kafkaConverter() {
         return AdditionalBeanBuildItem.builder()
@@ -487,6 +477,16 @@ public class KafkaProcessor {
     }
 
     // Kafka Dev UI related stuff
+
+    //TODO: make configurable
+    @BuildStep
+    public AdditionalBeanBuildItem kafkaAdminClient() {
+        return AdditionalBeanBuildItem.builder()
+                .addBeanClass(KafkaAdminClient.class)
+                .setUnremovable()
+                .build();
+    }
+
     //TODO: make configurable
     @BuildStep
     public AdditionalBeanBuildItem kafkaTopicClient() {
@@ -508,16 +508,33 @@ public class KafkaProcessor {
     @BuildStep
     @Record(ExecutionTime.RUNTIME_INIT)
     public void registerKafkaUiHandler(
-            BuildProducer<RouteBuildItem> routeProducer,
+            // BuildProducer<RouteBuildItem> routeProducer,
             KafkaDevUIRecorder recorder,
             //            Map<String, Object> runtimeConfig,
             LaunchModeBuildItem launchMode,
             NonApplicationRootPathBuildItem nonApplicationRootPathBuildItem,
             KafkaBuildTimeConfig buildConfig,
-            WebJarResultsBuildItem webJarResultsBuildItem,
+            //WebJarResultsBuildItem webJarResultsBuildItem,
+            VertxWebRouterBuildItem vertxWebRouterBuildItem,
             ShutdownContextBuildItem shutdownContext) {
+
         if (shouldIncludeDevUi(launchMode, buildConfig)) {
-            System.out.println("====================== registerKafkaUiHandler =======================");
+
+            String kafkaUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.devUiRootPath);
+            System.out
+                    .println("====================== registerKafkaUiHandler path: " + kafkaUiPath + " =======================");
+
+            recorder.setupRoutes(vertxWebRouterBuildItem.getHttpRouter(), kafkaUiPath);
+
+            //            routeProducer.produce(nonApplicationRootPathBuildItem.routeBuilder()
+            //                    .route(buildConfig.devUiRootPath)
+            //                    .displayOnNotFoundPage("Kafka Dev UI not found")
+            //                    .handler(BodyHandler.create())
+            //                    .handler(StaticHandler
+            //                            .create()
+            //                            .setCachingEnabled(false)
+            //                            .setWebRoot("/"))
+            //                    .build());
         }
     }
 

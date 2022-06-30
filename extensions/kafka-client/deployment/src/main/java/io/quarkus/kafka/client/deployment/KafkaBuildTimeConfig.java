@@ -30,6 +30,12 @@ public class KafkaBuildTimeConfig {
     public boolean devUiEnabled;
 
     /**
+     * Whether or not to enable Kafka Dev UI in non-development native mode.
+     */
+    @ConfigItem(name = "devui.rootpath", defaultValue = "kafka-ui")
+    public String devUiRootPath;
+
+    /**
      * Whether or not the Kafka is running in RHOSAKe.
      */
     @ConfigItem(name = "rhosak.isUsed", defaultValue = "false")
