@@ -30,14 +30,15 @@ public class KafkaDevUIRecorder {
     public void setupRoutes(RuntimeValue<Router> routerValue, String prefix) {
         System.out.println("======================== setup of routes in recorder ===================== on " + prefix);
         Router router = routerValue.getValue();
-        BodyHandler bodyHandler = BodyHandler.create();
         router.get(prefix + "/*").handler(StaticHandler
                 .create("META-INF/resources")
                 .setCachingEnabled(false)
                 .setDefaultContentEncoding("UTF-8")
         //                .setWebRoot("/")
         );
-        router.post(prefix + "/kafka-admin").handler(bodyHandler).handler(kafkaControlHandler());
+        router.post(prefix + "/kafka-admin")
+                .handler(BodyHandler.create())
+                .handler(kafkaControlHandler());
     }
 
     public Handler<RoutingContext> kafkaControlHandler() {
