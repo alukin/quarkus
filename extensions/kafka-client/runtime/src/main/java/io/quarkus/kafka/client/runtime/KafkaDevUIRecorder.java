@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.arc.Arc;
-import io.quarkus.arc.runtime.BeanContainer;
 import io.quarkus.kafka.client.runtime.devui.model.KafkaMessageCreateRequest;
 import io.quarkus.kafka.client.runtime.devui.model.Order;
 import io.quarkus.runtime.RuntimeValue;
@@ -20,6 +19,7 @@ import io.vertx.core.Handler;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.StaticHandler;
 
 /**
  * Handles POST requests from dev UI templates
@@ -27,17 +27,25 @@ import io.vertx.ext.web.handler.BodyHandler;
 @Recorder
 public class KafkaDevUIRecorder {
 
-    public void setupRoutes(BeanContainer beanContainer, RuntimeValue<Router> routerValue, String prefix) {
-        System.out.println("======================== setup of recorder ===================== on " + prefix);
+    public void setupRoutes(RuntimeValue<Router> routerValue, String prefix) {
+        System.out.println("======================== setup of routes in recorder ===================== on " + prefix);
         Router router = routerValue.getValue();
         BodyHandler bodyHandler = BodyHandler.create();
-
-        router.post(prefix).handler(bodyHandler);
+        router.get(prefix + "/*").handler(StaticHandler
+                .create("META-INF/resources")
+                .setCachingEnabled(false)
+                .setDefaultContentEncoding("UTF-8")
+        //                .setWebRoot("/")
+        );
+        router.post(prefix + "/kafka-admin").handler(bodyHandler).handler(kafkaControlHandler());
     }
 
     public Handler<RoutingContext> kafkaControlHandler() {
+
         return new Handler<RoutingContext>() {
             protected void handlePost(RoutingContext event) throws Exception {
+
+                event.response().putHeader("Content-Type", "application/json");
 
                 var body = event.getBodyAsJson();
                 String bs = event.getBodyAsString();
@@ -86,6 +94,7 @@ public class KafkaDevUIRecorder {
                                 var mapper = new JsonMapper();
                                 var rq = mapper.readValue(event.getBodyAsString(), KafkaMessageCreateRequest.class);
                                 webUtils.createMessage(rq);
+                                message = "{}";
                                 break;
                             case "getPartitions":
                                 var topicName = body.getString("topicName");
