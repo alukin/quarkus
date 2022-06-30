@@ -138,6 +138,20 @@ public class FastBootMetadataBuilder {
 
         // Build the "standard" service registry
         ssrBuilder.applySettings(buildTimeSettings.getSettings());
+        // We don't add unsupported properties to mergedSettings/buildTimeSettings,
+        // so that we can more easily differentiate between
+        // properties coming from Quarkus and "unsupported" properties
+        // on startup (see io.quarkus.hibernate.orm.runtime.FastBootHibernatePersistenceProvider.buildRuntimeSettings)
+        for (Map.Entry<String, String> entry : puDefinition.getQuarkusConfigUnsupportedProperties().entrySet()) {
+            var key = entry.getKey();
+            if (buildTimeSettings.get(key) != null) {
+                // Ignore properties that were already set by Quarkus;
+                // we'll log a warning about those on startup.
+                // (see io.quarkus.hibernate.orm.runtime.FastBootHibernatePersistenceProvider.buildRuntimeSettings)
+                continue;
+            }
+            ssrBuilder.applySetting(key, entry.getValue());
+        }
         this.standardServiceRegistry = ssrBuilder.build();
         registerIdentifierGenerators(standardServiceRegistry);
 
@@ -155,7 +169,7 @@ public class FastBootMetadataBuilder {
          * initializes the EnversService and produces some additional mapping documents.
          * 4. After that point the EnversService appears to be fully functional.
          *
-         * The following trick uses the aforementioned steps to setup the EnversService and then turns it into
+         * The following trick uses the aforementioned steps to set up the EnversService and then turns it into
          * a ProvidedService so that it is not necessary to repeat all these complex steps during the reactivation
          * of the destroyed service registry in PreconfiguredServiceRegistryBuilder.
          *
@@ -239,7 +253,7 @@ public class FastBootMetadataBuilder {
 
         cfg.put("hibernate.temp.use_jdbc_metadata_defaults", "false");
 
-        //This shouldn't be encouraged but sometimes it's really useful - and it used to be the default
+        //This shouldn't be encouraged, but sometimes it's really useful - and it used to be the default
         //in Hibernate ORM before the JPA spec would require to change this.
         //At this time of transitioning we'll only expose it as a global system property, so to allow usage
         //for special circumstances and yet not encourage this.

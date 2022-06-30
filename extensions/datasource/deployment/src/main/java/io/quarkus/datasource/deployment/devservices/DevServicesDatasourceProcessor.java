@@ -86,7 +86,7 @@ public class DevServicesDatasourceProcessor {
                 for (RunningDevService database : databases) {
                     devServicesResultBuildItemBuildProducer.produce(database.toBuildItem());
                 }
-                // keep the previous behaviour of producing DevServicesDatasourceResultBuildItem only when the devservice first starts.
+                // keep the previous behaviour of producing DevServicesDatasourceResultBuildItem only when the devservices first starts.
                 return null;
             }
             for (Closeable i : databases) {
@@ -267,7 +267,10 @@ public class DevServicesDatasourceProcessor {
                     dataSourceBuildTimeConfig.devservices.containerProperties,
                     dataSourceBuildTimeConfig.devservices.properties,
                     dataSourceBuildTimeConfig.devservices.port,
-                    dataSourceBuildTimeConfig.devservices.command);
+                    dataSourceBuildTimeConfig.devservices.command,
+                    dataSourceBuildTimeConfig.devservices.dbName,
+                    dataSourceBuildTimeConfig.devservices.username,
+                    dataSourceBuildTimeConfig.devservices.password);
 
             DevServicesDatasourceProvider.RunningDevServicesDatasource datasource = devDbProvider
                     .startDatabase(ConfigProvider.getConfig().getOptionalValue(prefix + "username", String.class),

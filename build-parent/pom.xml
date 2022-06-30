@@ -50,10 +50,10 @@
 
         <!-- Dev tools -->
         <freemarker.version>2.3.31</freemarker.version>
-        <commonmark.version>0.18.2</commonmark.version>
+        <commonmark.version>0.19.0</commonmark.version>
 
         <!-- Arquillian BOM -->
-        <arquillian.version>1.5.0.Final</arquillian.version>
+        <arquillian.version>1.7.0.Alpha10</arquillian.version>
 
         <!-- Enable APT by default for Eclipse -->
         <m2e.apt.activation>jdt_apt</m2e.apt.activation>
@@ -102,7 +102,7 @@
 
         <!-- The image to use for tests that run Keycloak -->
         <!-- IMPORTANT: If this is changed you must also update bom/application/pom.xml and KeycloakBuildTimeConfig/DevServicesConfig in quarkus-oidc/deployment to match the version -->
-        <keycloak.version>18.0.0</keycloak.version>
+        <keycloak.version>18.0.1</keycloak.version>
         <keycloak.docker.image>quay.io/keycloak/keycloak:${keycloak.version}</keycloak.docker.image>
         <keycloak.docker.legacy.image>quay.io/keycloak/keycloak:${keycloak.version}-legacy</keycloak.docker.legacy.image>
 
@@ -114,7 +114,7 @@
         <wiremock-maven-plugin.version>7.1.0</wiremock-maven-plugin.version>
 
         <!-- Artemis test dependencies -->
-        <artemis.version>2.22.0</artemis.version>
+        <artemis.version>2.23.1</artemis.version>
 
         <!-- Code Coverage Properties-->
         <jacoco.agent.argLine></jacoco.agent.argLine>
@@ -123,16 +123,16 @@
 
 
         <asciidoctor-maven-plugin.version>2.0.0</asciidoctor-maven-plugin.version>
-        <docker-maven-plugin.version>0.40.0</docker-maven-plugin.version>
-        <formatter-maven-plugin.version>2.18.0</formatter-maven-plugin.version>
-        <impsort-maven-plugin.version>1.6.2</impsort-maven-plugin.version>
+        <docker-maven-plugin.version>0.40.1</docker-maven-plugin.version>
+        <formatter-maven-plugin.version>2.19.0</formatter-maven-plugin.version>
+        <impsort-maven-plugin.version>1.7.0</impsort-maven-plugin.version>
         <maven-invoker-plugin.version>3.2.2</maven-invoker-plugin.version>
         <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
         <maven-dependency-plugin.version>3.1.2</maven-dependency-plugin.version>
 
         <!-- Webjars used by the Dev UI -->
         <webjar.bootstrap.version>4.6.1</webjar.bootstrap.version>
-        <webjar.font-awesome.version>6.1.0</webjar.font-awesome.version>
+        <webjar.font-awesome.version>6.1.1</webjar.font-awesome.version>
         <webjar.jquery.version>3.6.0</webjar.jquery.version>
         <webjar.codemirror.version>5.62.2</webjar.codemirror.version>
         <!-- we don't add mermaid as a dependency as it brings a ton of things we don't use -->
@@ -489,7 +489,7 @@
                                          3.0.0 suffers from https://issues.apache.org/jira/browse/MENFORCER-394, so we need to wait for a fixed release.
                                     <requirePluginVersions>
                                         <phases>compile</phases>
-                                        <unCheckedPluginList>io.quarkus:quarkus-extension-maven-plugin,io.quarkus:quarkus-bootstrap-maven-plugin,io.quarkus:quarkus-platform-descriptor-json-plugin,io.quarkus:quarkus-maven-plugin</unCheckedPluginList>
+                                        <unCheckedPluginList>io.quarkus:quarkus-extension-maven-plugin,io.quarkus:quarkus-bootstrap-maven-plugin,io.quarkus:quarkus-maven-plugin</unCheckedPluginList>
                                     </requirePluginVersions>-->
                                     <bannedDependencies>
                                         <excludes>
@@ -589,6 +589,8 @@
                                             <!-- Includes its own copy of an old version of the servlet API-->
                                             <exclude>org.apache.tomcat.embed:tomcat-embed-core</exclude>
                                             <exclude>org.jboss.modules:jboss-modules</exclude>
+                                            <!-- We prefer ByteBuddy where possible -->
+                                            <exclude>org.javassist:javassist</exclude>
                                         </excludes>
                                         <includes>
                                             <!-- this is for REST Assured -->
@@ -1162,13 +1164,13 @@
                             <newArtifacts>
                                 <artifact>${project.groupId}:${project.artifactId}:${revapi.newVersion}</artifact>
                             </newArtifacts>
-                            <!-- don't fail is false making it possible to have 
+                            <!-- don't fail is false making it possible to have
                                 revapi checks without requiring config files -->
                             <failOnMissingConfigurationFiles>false</failOnMissingConfigurationFiles>
-                            <!-- Consider changes from the latest .Final version, 
+                            <!-- Consider changes from the latest .Final version,
                                 not from the latest non-snapshot. -->
                             <versionFormat>\d+\.\d+\.\d+\.Final</versionFormat>
-                            <!-- By default revapi will check the oldArtifact 
+                            <!-- By default revapi will check the oldArtifact
                                 against the currently executed build -->
                             <!-- <checkDependencies>false</checkDependencies> -->
                             <analysisConfigurationFiles>
@@ -1182,8 +1184,8 @@
                                     </roots>
                                 </configurationFile>
                             </analysisConfigurationFiles>
-                            <!-- By default, revapi will only fail the build 
-                                 if there are potentially breaking or breaking changes. However, in the report 
+                            <!-- By default, revapi will only fail the build
+                                 if there are potentially breaking or breaking changes. However, in the report
                                  we want even non breaking changes to be present. -->
                             <reportSeverity>nonBreaking</reportSeverity>
                             <failSeverity>potentiallyBreaking</failSeverity>
@@ -1193,11 +1195,11 @@
                             <ignoreSuggestionsFile>${project.build.directory}/api-changes-suggestions.xml</ignoreSuggestionsFile>
                             <expandProperties>true</expandProperties>
                         </configuration>
-                        <!-- Running two executions is a workaround to make sure 
-                             we get a HTML report in case revapi finds some incompatible changes. The 
-                             "check" goal will simply fail the whole build before it could get to the 
-                             report. To make sure we always get a HTML report, the "report" goal needs 
-                             to be executed before the "check" goal. Once https://github.com/revapi/revapi/issues/11 
+                        <!-- Running two executions is a workaround to make sure
+                             we get a HTML report in case revapi finds some incompatible changes. The
+                             "check" goal will simply fail the whole build before it could get to the
+                             report. To make sure we always get a HTML report, the "report" goal needs
+                             to be executed before the "check" goal. Once https://github.com/revapi/revapi/issues/11
                              is fixed it should be possible to use single execution. -->
                         <executions>
                             <execution>

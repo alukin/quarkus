@@ -42,9 +42,7 @@ class Parser implements Function<String, Expression>, ParserHelper, ParserDelega
     private static final char END_DELIMITER = '}';
     private static final char COMMENT_DELIMITER = '!';
     private static final char CDATA_START_DELIMITER = '|';
-    private static final char CDATA_START_DELIMITER_OLD = '[';
     private static final char CDATA_END_DELIMITER = '|';
-    private static final char CDATA_END_DELIMITER_OLD = ']';
     private static final char UNDERSCORE = '_';
     private static final char ESCAPE_CHAR = '\\';
     private static final char NAMESPACE_SEPARATOR = ':';
@@ -158,9 +156,9 @@ class Parser implements Function<String, Expression>, ParserHelper, ParserDelega
                     }
                     throw error(code,
                             "unexpected non-text buffer at the end of the template - {reason}: {buffer}")
-                                    .argument("reason", reason)
-                                    .argument("buffer", buffer)
-                                    .build();
+                            .argument("reason", reason)
+                            .argument("buffer", buffer)
+                            .build();
                 }
             }
 
@@ -307,7 +305,7 @@ class Parser implements Function<String, Expression>, ParserHelper, ParserDelega
     }
 
     private boolean isCdataEnd(char character) {
-        return character == CDATA_END_DELIMITER || character == CDATA_END_DELIMITER_OLD;
+        return character == CDATA_END_DELIMITER;
     }
 
     private void tag(char character) {
@@ -335,7 +333,7 @@ class Parser implements Function<String, Expression>, ParserHelper, ParserDelega
             if (character == COMMENT_DELIMITER) {
                 buffer.append(character);
                 state = State.COMMENT;
-            } else if (character == CDATA_START_DELIMITER || character == CDATA_START_DELIMITER_OLD) {
+            } else if (character == CDATA_START_DELIMITER) {
                 state = State.CDATA;
             } else {
                 buffer.append(character);
@@ -356,7 +354,6 @@ class Parser implements Function<String, Expression>, ParserHelper, ParserDelega
     private boolean isValidIdentifierStart(char character) {
         // A valid identifier must start with a digit, alphabet, underscore, comment delimiter, cdata start delimiter or a tag command (e.g. # for sections)
         return Tag.isCommand(character) || character == COMMENT_DELIMITER || character == CDATA_START_DELIMITER
-                || character == CDATA_START_DELIMITER_OLD
                 || character == UNDERSCORE
                 || Character.isDigit(character)
                 || Character.isAlphabetic(character);
@@ -501,8 +498,8 @@ class Parser implements Function<String, Expression>, ParserHelper, ParserDelega
             if (!name.isEmpty() && !block.getLabel().equals(name)) {
                 throw error(ParserError.SECTION_BLOCK_END_DOES_NOT_MATCH_START,
                         "section block end tag [{name}] does not match the start tag [{tagName}]")
-                                .argument("name", name)
-                                .argument("tagName", block.getLabel()).build();
+                        .argument("name", name)
+                        .argument("tagName", block.getLabel()).build();
             }
             section.endBlock();
         } else {
@@ -515,9 +512,9 @@ class Parser implements Function<String, Expression>, ParserHelper, ParserDelega
             if (!name.isEmpty() && !section.helperName.equals(name)) {
                 throw error(ParserError.SECTION_END_DOES_NOT_MATCH_START,
                         "section end tag [{name}] does not match the start tag [{tag}]")
-                                .argument("name", name)
-                                .argument("tag", section.helperName)
-                                .build();
+                        .argument("name", name)
+                        .argument("tag", section.helperName)
+                        .build();
             }
             // Pop the section and its main block
             section = sectionStack.pop();
@@ -589,8 +586,8 @@ class Parser implements Function<String, Expression>, ParserHelper, ParserDelega
             if (factory == null) {
                 throw error(ParserError.NO_SECTION_HELPER_FOUND,
                         "Parameter declaration with a default value requires a \\{#let} section helper to be present: {tag}")
-                                .argument("tag", tag)
-                                .build();
+                        .argument("tag", tag)
+                        .build();
             }
             SectionNode.Builder sectionNode = SectionNode
                     .builder("let", origin(0), this, this)
@@ -713,9 +710,9 @@ class Parser implements Function<String, Expression>, ParserHelper, ParserDelega
         if (!undeclaredParams.isEmpty()) {
             throw error(ParserError.MANDATORY_SECTION_PARAMS_MISSING,
                     "mandatory section parameters not declared for {tag}: {undeclaredParams}")
-                            .argument("tag", tag)
-                            .argument("undeclaredParams", undeclaredParams)
-                            .build();
+                    .argument("tag", tag)
+                    .argument("undeclaredParams", undeclaredParams)
+                    .build();
         }
 
         for (Entry<String, String> e : params.entrySet()) {

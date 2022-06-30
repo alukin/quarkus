@@ -38,7 +38,6 @@ import io.quarkus.deployment.pkg.NativeConfig;
 import io.quarkus.deployment.pkg.PackageConfig;
 import io.quarkus.deployment.pkg.builditem.ArtifactResultBuildItem;
 import io.quarkus.deployment.pkg.builditem.BuildSystemTargetBuildItem;
-import io.quarkus.deployment.pkg.builditem.CompiledJavaVersionBuildItem;
 import io.quarkus.deployment.pkg.builditem.CurateOutcomeBuildItem;
 import io.quarkus.deployment.pkg.builditem.NativeImageBuildItem;
 import io.quarkus.deployment.pkg.builditem.NativeImageSourceJarBuildItem;
@@ -79,10 +78,11 @@ public class NativeImageBuildStep {
     private static final String MOVED_TRUST_STORE_NAME = "trustStore";
     public static final String APP_SOURCES = "app-sources";
 
-    @BuildStep(onlyIf = NativeOrNativeSourcesBuildGraal22_2OrLater.class)
+    @BuildStep(onlyIf = NativeOrNativeSourcesBuild.class)
     void addExportsToNativeImage(BuildProducer<JPMSExportBuildItem> exports) {
         // Needed by io.quarkus.runtime.ResourceHelper.registerResources
-        exports.produce(new JPMSExportBuildItem("org.graalvm.nativeimage.builder", "com.oracle.svm.core.jdk"));
+        exports.produce(new JPMSExportBuildItem("org.graalvm.nativeimage.builder", "com.oracle.svm.core.jdk",
+                GraalVM.Version.VERSION_22_1_0));
     }
 
     @BuildStep(onlyIf = NativeOrNativeSourcesBuild.class)
@@ -177,7 +177,6 @@ public class NativeImageBuildStep {
             List<JPMSExportBuildItem> jpmsExportBuildItems,
             List<NativeMinimalJavaVersionBuildItem> nativeMinimalJavaVersions,
             List<UnsupportedOSBuildItem> unsupportedOses,
-            CompiledJavaVersionBuildItem compiledJavaVersionBuildItem,
             Optional<ProcessInheritIODisabled> processInheritIODisabled,
             Optional<ProcessInheritIODisabledBuildItem> processInheritIODisabledBuildItem,
             List<NativeImageFeatureBuildItem> nativeImageFeatures) {
@@ -205,7 +204,6 @@ public class NativeImageBuildStep {
         Path finalExecutablePath = outputTargetBuildItem.getOutputDirectory().resolve(resultingExecutableName);
 
         NativeImageBuildRunner buildRunner = getNativeImageBuildRunner(nativeConfig, outputDir,
-                compiledJavaVersionBuildItem.getJavaVersion(),
                 nativeImageName, resultingExecutableName);
         buildRunner.setup(processInheritIODisabled.isPresent() || processInheritIODisabledBuildItem.isPresent());
         final GraalVM.Version graalVMVersion = buildRunner.getGraalVMVersion();
@@ -306,7 +304,6 @@ public class NativeImageBuildStep {
     }
 
     private static NativeImageBuildRunner getNativeImageBuildRunner(NativeConfig nativeConfig, Path outputDir,
-            CompiledJavaVersionBuildItem.JavaVersion javaVersion,
             String nativeImageName, String resultingExecutableName) {
         if (!nativeConfig.isContainerBuild()) {
             NativeImageBuildLocalRunner localRunner = getNativeImageBuildLocalRunner(nativeConfig, outputDir.toFile());
@@ -322,10 +319,10 @@ public class NativeImageBuildStep {
             log.warn(errorMessage + " Attempting to fall back to container build.");
         }
         if (nativeConfig.remoteContainerBuild) {
-            return new NativeImageBuildRemoteContainerRunner(nativeConfig, outputDir, javaVersion,
+            return new NativeImageBuildRemoteContainerRunner(nativeConfig, outputDir,
                     nativeImageName, resultingExecutableName);
         }
-        return new NativeImageBuildLocalContainerRunner(nativeConfig, outputDir, javaVersion);
+        return new NativeImageBuildLocalContainerRunner(nativeConfig, outputDir);
     }
 
     private void copyJarSourcesToLib(OutputTargetBuildItem outputTargetBuildItem,
@@ -847,8 +844,11 @@ public class NativeImageBuildStep {
                 if (jpmsExports != null) {
                     HashSet<JPMSExportBuildItem> deduplicatedJpmsExport = new HashSet<>(jpmsExports);
                     for (JPMSExportBuildItem jpmsExport : deduplicatedJpmsExport) {
-                        nativeImageArgs.add(
-                                "-J--add-exports=" + jpmsExport.getModule() + "/" + jpmsExport.getPackage() + "=ALL-UNNAMED");
+                        if (graalVMVersion.isNewerThan(jpmsExport.getExportAfter())) {
+                            nativeImageArgs.add(
+                                    "-J--add-exports=" + jpmsExport.getModule() + "/" + jpmsExport.getPackage()
+                                            + "=ALL-UNNAMED");
+                        }
                     }
                 }
 
