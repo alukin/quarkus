@@ -48,72 +48,69 @@ public class KafkaDevUIRecorder {
 
                 event.response().putHeader("Content-Type", "application/json");
 
-                var body = event.getBodyAsJson();
-                String bs = event.getBodyAsString();
-                System.out.println("====================== Body string =============\n" + bs);
+                var body = event.body().asJsonObject();
                 System.out.println("====================== Path =============\n" + event.normalizedPath());
                 String action = "";
                 String key = "";
                 String value = "";
+                boolean res = false;
+                String message = "OK";
 
                 if (body != null) {
                     action = body.getString("action");
                     key = body.getString("key");
                     value = body.getString("value");
-                }
 
-                KafkaAdminClient adminClient = kafkaAdminClient();
-                KafkaDevUiUtils webUtils = kafkaWebUiUtils();
+                    KafkaAdminClient adminClient = kafkaAdminClient();
+                    KafkaDevUiUtils webUtils = kafkaWebUiUtils();
 
-                String message = "OK";
-
-                boolean res = true;
-                if (null == action) {
-                    res = false;
-                } else {
-                    try {
-                        switch (action) {
-                            case "getInfo":
-                                message = webUtils.toJson(webUtils.getKafkaInfo());
-                                break;
-                            case "createTopic":
-                                res = adminClient.createTopic(key);
-                                message = webUtils.toJson(webUtils.getTopics());
-                                break;
-                            case "deleteTopic":
-                                res = adminClient.deleteTopic(key);
-                                message = webUtils.toJson(webUtils.getTopics());
-                                break;
-                            case "getTopics":
-                                message = webUtils.toJson(webUtils.getTopics());
-                                break;
-                            case "topicMessages":
-                                body.getInteger("");
-                                message = webUtils.toJson(webUtils.getTopicMessages(key, Order.OLD_FIRST, List.of(), 0L, 10L));
-                                break;
-                            case "createMessage":
-                                var mapper = new JsonMapper();
-                                var rq = mapper.readValue(event.getBodyAsString(), KafkaMessageCreateRequest.class);
-                                webUtils.createMessage(rq);
-                                message = "{}";
-                                break;
-                            case "getPartitions":
-                                var topicName = body.getString("topicName");
-                                message = webUtils.toJson(webUtils.partitions(topicName));
-                                break;
-                            default:
-                                res = false;
-                                break;
+                    if (null == action) {
+                        res = false;
+                    } else {
+                        try {
+                            switch (action) {
+                                case "getInfo":
+                                    message = webUtils.toJson(webUtils.getKafkaInfo());
+                                    break;
+                                case "createTopic":
+                                    res = adminClient.createTopic(key);
+                                    message = webUtils.toJson(webUtils.getTopics());
+                                    break;
+                                case "deleteTopic":
+                                    res = adminClient.deleteTopic(key);
+                                    message = webUtils.toJson(webUtils.getTopics());
+                                    break;
+                                case "getTopics":
+                                    message = webUtils.toJson(webUtils.getTopics());
+                                    break;
+                                case "topicMessages":
+                                    body.getInteger("");
+                                    message = webUtils
+                                            .toJson(webUtils.getTopicMessages(key, Order.OLD_FIRST, List.of(), 0L, 10L));
+                                    break;
+                                case "createMessage":
+                                    var mapper = new JsonMapper();
+                                    var rq = mapper.readValue(event.body().asString(), KafkaMessageCreateRequest.class);
+                                    webUtils.createMessage(rq);
+                                    message = "{}";
+                                    break;
+                                case "getPartitions":
+                                    var topicName = body.getString("topicName");
+                                    message = webUtils.toJson(webUtils.partitions(topicName));
+                                    break;
+                                default:
+                                    res = false;
+                                    break;
+                            }
+                        } catch (InterruptedException ex) {
+                            Thread.currentThread().interrupt();
+                        } catch (ExecutionException ex) {
+                            // LOGGER.error(ex);
+                        } catch (JsonProcessingException e) {
+                            throw new RuntimeException(e);
                         }
-                    } catch (InterruptedException ex) {
-                        Thread.currentThread().interrupt();
-                    } catch (ExecutionException ex) {
-                        // LOGGER.error(ex);
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
                     }
                 }
-
                 if (res) {
                     endResponse(event, OK, message);
                 } else {
