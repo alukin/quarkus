@@ -44,73 +44,71 @@ public class KafkaDevUIRecorder {
     public Handler<RoutingContext> kafkaControlHandler() {
 
         return new Handler<RoutingContext>() {
-            protected void handlePost(RoutingContext event) throws Exception {
 
-                event.response().putHeader("Content-Type", "application/json");
+            //This is method that could be copy-patsted to the extension KafkaDevConsoleRecorder.java
+            public void handlePost(RoutingContext event) {
 
                 var body = event.body().asJsonObject();
-                System.out.println("====================== Path =============\n" + event.normalizedPath());
-                String action = "";
-                String key = "";
-                String value = "";
-                boolean res = false;
+                String action = body.getString("action");
+                String key = body.getString("key");
+                String value = body.getString("value");
                 String message = "OK";
 
-                if (body != null) {
-                    action = body.getString("action");
-                    key = body.getString("key");
-                    value = body.getString("value");
+                KafkaDevUiUtils webUtils = kafkaWebUiUtils();
+                KafkaAdminClient adminClient = kafkaAdminClient();
 
-                    KafkaAdminClient adminClient = kafkaAdminClient();
-                    KafkaDevUiUtils webUtils = kafkaWebUiUtils();
-
-                    if (null == action) {
-                        res = false;
-                    } else {
-                        try {
-                            switch (action) {
-                                case "getInfo":
-                                    message = webUtils.toJson(webUtils.getKafkaInfo());
-                                    break;
-                                case "createTopic":
-                                    res = adminClient.createTopic(key);
-                                    message = webUtils.toJson(webUtils.getTopics());
-                                    break;
-                                case "deleteTopic":
-                                    res = adminClient.deleteTopic(key);
-                                    message = webUtils.toJson(webUtils.getTopics());
-                                    break;
-                                case "getTopics":
-                                    message = webUtils.toJson(webUtils.getTopics());
-                                    break;
-                                case "topicMessages":
-                                    body.getInteger("");
-                                    message = webUtils
-                                            .toJson(webUtils.getTopicMessages(key, Order.OLD_FIRST, List.of(), 0L, 10L));
-                                    break;
-                                case "createMessage":
-                                    var mapper = new JsonMapper();
-                                    var rq = mapper.readValue(event.body().asString(), KafkaMessageCreateRequest.class);
-                                    webUtils.createMessage(rq);
-                                    message = "{}";
-                                    break;
-                                case "getPartitions":
-                                    var topicName = body.getString("topicName");
-                                    message = webUtils.toJson(webUtils.partitions(topicName));
-                                    break;
-                                default:
-                                    res = false;
-                                    break;
-                            }
-                        } catch (InterruptedException ex) {
-                            Thread.currentThread().interrupt();
-                        } catch (ExecutionException ex) {
-                            // LOGGER.error(ex);
-                        } catch (JsonProcessingException e) {
-                            throw new RuntimeException(e);
+                boolean res = false;
+                if (null == action) {
+                    res = false;
+                } else {
+                    try {
+                        switch (action) {
+                            case "getInfo":
+                                message = webUtils.toJson(webUtils.getKafkaInfo());
+                                res = true;
+                                break;
+                            case "createTopic":
+                                res = adminClient.createTopic(key);
+                                message = webUtils.toJson(webUtils.getTopics());
+                                break;
+                            case "deleteTopic":
+                                res = adminClient.deleteTopic(key);
+                                message = webUtils.toJson(webUtils.getTopics());
+                                break;
+                            case "getTopics":
+                                message = webUtils.toJson(webUtils.getTopics());
+                                res = true;
+                                break;
+                            case "topicMessages":
+                                body.getInteger("");
+                                message = webUtils.toJson(webUtils.getTopicMessages(key, Order.OLD_FIRST, List.of(), 0L, 10L));
+                                res = true;
+                                break;
+                            case "createMessage":
+                                var mapper = new JsonMapper();
+                                var rq = mapper.readValue(event.getBodyAsString(), KafkaMessageCreateRequest.class);
+                                webUtils.createMessage(rq);
+                                message = "{}";
+                                res = true;
+                                break;
+                            case "getPartitions":
+                                var topicName = body.getString("topicName");
+                                message = webUtils.toJson(webUtils.partitions(topicName));
+                                res = true;
+                                break;
+                            default:
+                                res = false;
+                                break;
                         }
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    } catch (ExecutionException ex) {
+                        //  LOGGER.error(ex);
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
                     }
                 }
+
                 if (res) {
                     endResponse(event, OK, message);
                 } else {
@@ -135,7 +133,11 @@ public class KafkaDevUIRecorder {
             @Override
             public void handle(RoutingContext event) {
                 try {
-                    handlePost(event);
+                    if (event.body() != null) {
+                        handlePost(event);
+                    } else {
+                        endResponse(event, BAD_REQUEST, "No POST request body to process");
+                    }
                 } catch (Exception e) {
                     event.fail(e);
                 }
