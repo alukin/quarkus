@@ -1,11 +1,7 @@
 package io.quarkus.kafka.client.runtime;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import javax.inject.Singleton;
 
@@ -20,14 +16,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.quarkus.kafka.client.runtime.converter.KafkaModelConverter;
-import io.quarkus.kafka.client.runtime.devui.model.KafkaClusterInfo;
-import io.quarkus.kafka.client.runtime.devui.model.KafkaConsumerGroup;
-import io.quarkus.kafka.client.runtime.devui.model.KafkaInfo;
-import io.quarkus.kafka.client.runtime.devui.model.KafkaMessage;
-import io.quarkus.kafka.client.runtime.devui.model.KafkaMessageCreateRequest;
-import io.quarkus.kafka.client.runtime.devui.model.KafkaNode;
-import io.quarkus.kafka.client.runtime.devui.model.KafkaTopic;
-import io.quarkus.kafka.client.runtime.devui.model.Order;
+import io.quarkus.kafka.client.runtime.devui.model.*;
+import io.quarkus.kafka.client.runtime.devui.model.request.KafkaMessageCreateRequest;
+import io.quarkus.kafka.client.runtime.devui.model.request.KafkaMessagesRequest;
+import io.quarkus.kafka.client.runtime.devui.model.request.KafkaOffsetRequest;
 
 @Singleton
 public class KafkaDevUiUtils {
@@ -127,29 +119,27 @@ public class KafkaDevUiUtils {
         return ci;
     }
 
-    public Collection<KafkaMessage> getTopicMessages(String topicName, Order order,
-            List<Integer> requestedPartitions, long offset,
-            long pageSizePerPartition) throws ExecutionException, InterruptedException {
-        if (requestedPartitions.isEmpty()) {
-
-            return kafkaTopicClient
-                    .getTopicMessages(topicName, order, kafkaTopicClient.partitions(topicName), offset, pageSizePerPartition)
-                    .stream()
-                    .map(modelConverter::convert)
-                    .collect(Collectors.toList());
-        } else {
-            return kafkaTopicClient.getTopicMessages(topicName, order, requestedPartitions, offset, pageSizePerPartition)
-                    .stream()
-                    .map(modelConverter::convert)
-                    .collect(Collectors.toList());
-        }
-    }
-
     public void createMessage(KafkaMessageCreateRequest request) {
         kafkaTopicClient.createMessage(request);
     }
 
     public Collection<Integer> partitions(String topicName) throws ExecutionException, InterruptedException {
         return kafkaTopicClient.partitions(topicName);
+    }
+
+    public Map<Integer, Long> getStartOffset(KafkaOffsetRequest request) throws ExecutionException, InterruptedException {
+        return kafkaTopicClient.getPagePartitionOffset(request.getTopicName(), request.getRequestedPartitions(),
+                request.getOrder());
+    }
+
+    public KafkaMessagePage getMessages(KafkaMessagesRequest request) throws ExecutionException, InterruptedException {
+        return kafkaTopicClient.getTopicMessages(request.getTopicName(), request.getOrder(), request.getPartitionOffset(),
+                request.getPageSize());
+    }
+
+    public KafkaMessagePage getPage(KafkaMessagesRequest request) throws ExecutionException, InterruptedException {
+        return kafkaTopicClient.getPage(request.getTopicName(), request.getOrder(), request.getPageSize(),
+                request.getPageNumber(),
+                request.getPartitions());
     }
 }

@@ -3,16 +3,17 @@ package io.quarkus.kafka.client.runtime;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.arc.Arc;
-import io.quarkus.kafka.client.runtime.devui.model.KafkaMessageCreateRequest;
-import io.quarkus.kafka.client.runtime.devui.model.Order;
+import io.quarkus.kafka.client.runtime.devui.model.request.KafkaMessageCreateRequest;
+import io.quarkus.kafka.client.runtime.devui.model.request.KafkaMessagesRequest;
+import io.quarkus.kafka.client.runtime.devui.model.request.KafkaOffsetRequest;
 import io.quarkus.runtime.RuntimeValue;
 import io.quarkus.runtime.annotations.Recorder;
 import io.vertx.core.Handler;
@@ -26,6 +27,13 @@ import io.vertx.ext.web.handler.StaticHandler;
  */
 @Recorder
 public class KafkaDevUIRecorder {
+
+    //fixme
+    final ObjectMapper objectMapper;
+
+    public KafkaDevUIRecorder() {
+        this.objectMapper = new ObjectMapper();
+    }
 
     public void setupRoutes(RuntimeValue<Router> routerValue, String prefix) {
         System.out.println("======================== setup of routes in recorder ===================== on " + prefix);
@@ -80,9 +88,8 @@ public class KafkaDevUIRecorder {
                                 res = true;
                                 break;
                             case "topicMessages":
-                                body.getInteger("");
-                                message = webUtils.toJson(webUtils.getTopicMessages(key, Order.OLD_FIRST, List.of(), 0L, 10L));
-                                res = true;
+                                var offsetRequest = event.body().asPojo(KafkaMessagesRequest.class);
+                                message = webUtils.toJson(webUtils.getPage(offsetRequest));
                                 break;
                             case "createMessage":
                                 var mapper = new JsonMapper();
@@ -96,6 +103,9 @@ public class KafkaDevUIRecorder {
                                 message = webUtils.toJson(webUtils.partitions(topicName));
                                 res = true;
                                 break;
+                            case "getStartOffset":
+                                var request = event.body().asPojo(KafkaOffsetRequest.class);
+                                message = webUtils.toJson(webUtils.getStartOffset(request));
                             default:
                                 res = false;
                                 break;
