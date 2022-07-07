@@ -86,7 +86,7 @@ public class KafkaDevUIRecorder {
                                 break;
                             case "createMessage":
                                 var mapper = new JsonMapper();
-                                var rq = mapper.readValue(event.getBodyAsString(), KafkaMessageCreateRequest.class);
+                                var rq = mapper.readValue(event.body().asString(), KafkaMessageCreateRequest.class);
                                 webUtils.createMessage(rq);
                                 message = "{}";
                                 res = true;
