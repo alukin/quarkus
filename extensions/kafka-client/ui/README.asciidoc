@@ -1,0 +1,19 @@
+= Kafka UI
+
+This allows you you add Kafka UI with your project. 
+
+The UI will be available under `/kafka-ui`.
+
+To include it in your project (replace xyz with the latest version):
+
+[source,xml]
+----
+    <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-kafka-client-ui</artifactId>
+        <version>xyz</version>
+        <scope>runtime</scope>
+    </dependency>
+----
+
+This expects the endpoint at `/kafka-ui`.
