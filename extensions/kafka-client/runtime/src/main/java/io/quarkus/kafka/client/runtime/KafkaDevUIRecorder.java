@@ -103,9 +103,11 @@ public class KafkaDevUIRecorder {
                                 message = webUtils.toJson(webUtils.partitions(topicName));
                                 res = true;
                                 break;
-                            case "getStartOffset":
+                            case "getOffset":
                                 var request = event.body().asPojo(KafkaOffsetRequest.class);
-                                message = webUtils.toJson(webUtils.getStartOffset(request));
+                                message = webUtils.toJson(webUtils.getOffset(request));
+                                res = true;
+                                break;
                             default:
                                 res = false;
                                 break;
