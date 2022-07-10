@@ -9,16 +9,13 @@ public class KafkaOffsetRequest {
     private List<Integer> requestedPartitions;
     private Order order;
 
-    private Integer pageNumber;
-
     public KafkaOffsetRequest() {
     }
 
-    public KafkaOffsetRequest(String topicName, List<Integer> requestedPartitions, Order order, Integer pageNumber) {
+    public KafkaOffsetRequest(String topicName, List<Integer> requestedPartitions, Order order) {
         this.topicName = topicName;
         this.requestedPartitions = requestedPartitions;
         this.order = order;
-        this.pageNumber = pageNumber;
     }
 
     public String getTopicName() {
@@ -31,9 +28,5 @@ public class KafkaOffsetRequest {
 
     public Order getOrder() {
         return order;
-    }
-
-    public Integer getPageNumber() {
-        return pageNumber;
     }
 }

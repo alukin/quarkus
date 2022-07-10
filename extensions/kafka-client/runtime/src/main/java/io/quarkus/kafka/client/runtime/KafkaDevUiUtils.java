@@ -127,7 +127,7 @@ public class KafkaDevUiUtils {
         return kafkaTopicClient.partitions(topicName);
     }
 
-    public Map<Integer, Long> getStartOffset(KafkaOffsetRequest request) throws ExecutionException, InterruptedException {
+    public Map<Integer, Long> getOffset(KafkaOffsetRequest request) throws ExecutionException, InterruptedException {
         return kafkaTopicClient.getPagePartitionOffset(request.getTopicName(), request.getRequestedPartitions(),
                 request.getOrder());
     }
