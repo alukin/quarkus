@@ -49,6 +49,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.runtime.BeanContainer;
 import io.quarkus.bootstrap.runner.Timing;
+import io.quarkus.credentials.CredentialsProvider;
+import io.quarkus.credentials.runtime.CredentialsProviderFinder;
 import io.quarkus.dev.spi.DevModeType;
 import io.quarkus.dev.spi.HotReplacementContext;
 import io.quarkus.netty.runtime.virtual.VirtualAddress;
@@ -781,10 +783,22 @@ public class VertxHttpRecorder {
             certificates.add(certFile.get());
         }
 
+        // credentials provider
+        Map<String, String> credentials = Map.of();
+        if (sslConfig.certificate.credentialsProvider.isPresent()) {
+            String beanName = sslConfig.certificate.credentialsProviderName.orElse(null);
+            CredentialsProvider credentialsProvider = CredentialsProviderFinder.find(beanName);
+            String name = sslConfig.certificate.credentialsProvider.get();
+            credentials = credentialsProvider.getCredentials(name);
+        }
         final Optional<Path> keyStoreFile = sslConfig.certificate.keyStoreFile;
-        final String keystorePassword = sslConfig.certificate.keyStorePassword;
+        final Optional<String> keyStorePassword = getCredential(sslConfig.certificate.keyStorePassword, credentials,
+                sslConfig.certificate.keyStorePasswordKey);
+        final Optional<String> keyStoreKeyPassword = getCredential(sslConfig.certificate.keyStoreKeyPassword, credentials,
+                sslConfig.certificate.keyStoreKeyPasswordKey);
         final Optional<Path> trustStoreFile = sslConfig.certificate.trustStoreFile;
-        final Optional<String> trustStorePassword = sslConfig.certificate.trustStorePassword;
+        final Optional<String> trustStorePassword = getCredential(sslConfig.certificate.trustStorePassword, credentials,
+                sslConfig.certificate.trustStorePasswordKey);
         final HttpServerOptions serverOptions = new HttpServerOptions();
 
         //ssl
@@ -801,11 +815,11 @@ public class VertxHttpRecorder {
         } else if (keyStoreFile.isPresent()) {
             KeyStoreOptions options = createKeyStoreOptions(
                     keyStoreFile.get(),
-                    keystorePassword,
+                    keyStorePassword.orElse("password"),
                     sslConfig.certificate.keyStoreFileType,
                     sslConfig.certificate.keyStoreProvider,
                     sslConfig.certificate.keyStoreKeyAlias,
-                    sslConfig.certificate.keyStoreKeyPassword);
+                    keyStoreKeyPassword);
             serverOptions.setKeyCertOptions(options);
         } else {
             return null;
@@ -844,6 +858,19 @@ public class VertxHttpRecorder {
         applyCommonOptions(serverOptions, buildTimeConfig, httpConfiguration, websocketSubProtocols);
 
         return serverOptions;
+    }
+
+    private static Optional<String> getCredential(Optional<String> password, Map<String, String> credentials,
+            Optional<String> passwordKey) {
+        if (password.isPresent()) {
+            return password;
+        }
+
+        if (passwordKey.isPresent()) {
+            return Optional.ofNullable(credentials.get(passwordKey.get()));
+        } else {
+            return Optional.empty();
+        }
     }
 
     private static void applyCommonOptions(HttpServerOptions httpServerOptions,
@@ -980,6 +1007,15 @@ public class VertxHttpRecorder {
         applyCommonOptions(options, buildTimeConfig, httpConfiguration, websocketSubProtocols);
         // Override the host (0.0.0.0 by default) with the configured domain socket.
         options.setHost(httpConfiguration.domainSocket);
+
+        // Check if we can write into the domain socket directory
+        // We can do this check using a blocking API as the execution is done from the main thread (not an I/O thread)
+        File file = new File(httpConfiguration.domainSocket);
+        if (!file.getParentFile().canWrite()) {
+            LOGGER.warnf(
+                    "Unable to write in the domain socket directory (`%s`). Binding to the socket is likely going to fail.",
+                    httpConfiguration.domainSocket);
+        }
 
         return options;
     }
@@ -1137,7 +1173,13 @@ public class VertxHttpRecorder {
                         startFuture.complete(null);
                     }
                 } else {
-                    if (event.cause() instanceof IllegalArgumentException) {
+                    if (event.cause() != null && event.cause().getMessage() != null
+                            && event.cause().getMessage().contains("Permission denied")) {
+                        startFuture.fail(new IllegalStateException(
+                                String.format(
+                                        "Unable to bind to Unix domain socket (%s) as the application does not have the permission to write in the directory.",
+                                        domainSocketOptions.getHost())));
+                    } else if (event.cause() instanceof IllegalArgumentException) {
                         startFuture.fail(new IllegalArgumentException(
                                 String.format(
                                         "Unable to bind to Unix domain socket. Consider adding the 'io.netty:%s' dependency. See the Quarkus Vert.x reference guide for more details.",

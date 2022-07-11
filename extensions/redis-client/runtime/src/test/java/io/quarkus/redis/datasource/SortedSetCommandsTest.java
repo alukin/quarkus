@@ -16,21 +16,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.quarkus.redis.datasource.api.Cursor;
-import io.quarkus.redis.datasource.api.RedisDataSource;
-import io.quarkus.redis.datasource.api.ScanArgs;
-import io.quarkus.redis.datasource.api.SortArgs;
-import io.quarkus.redis.datasource.api.list.KeyValue;
-import io.quarkus.redis.datasource.api.list.ListCommands;
-import io.quarkus.redis.datasource.api.sortedset.Range;
-import io.quarkus.redis.datasource.api.sortedset.ScoreRange;
-import io.quarkus.redis.datasource.api.sortedset.ScoredValue;
-import io.quarkus.redis.datasource.api.sortedset.SortedSetCommands;
-import io.quarkus.redis.datasource.api.sortedset.ZAddArgs;
-import io.quarkus.redis.datasource.api.sortedset.ZAggregateArgs;
-import io.quarkus.redis.datasource.api.sortedset.ZRangeArgs;
-import io.quarkus.redis.datasource.api.sortedset.ZScanCursor;
-import io.quarkus.redis.datasource.impl.BlockingRedisDataSourceImpl;
+import io.quarkus.redis.datasource.list.KeyValue;
+import io.quarkus.redis.datasource.list.ListCommands;
+import io.quarkus.redis.datasource.sortedset.Range;
+import io.quarkus.redis.datasource.sortedset.ScoreRange;
+import io.quarkus.redis.datasource.sortedset.ScoredValue;
+import io.quarkus.redis.datasource.sortedset.SortedSetCommands;
+import io.quarkus.redis.datasource.sortedset.ZAddArgs;
+import io.quarkus.redis.datasource.sortedset.ZAggregateArgs;
+import io.quarkus.redis.datasource.sortedset.ZRangeArgs;
+import io.quarkus.redis.datasource.sortedset.ZScanCursor;
+import io.quarkus.redis.runtime.datasource.BlockingRedisDataSourceImpl;
 
 @SuppressWarnings("unchecked")
 public class SortedSetCommandsTest extends DatasourceTestBase {
@@ -631,6 +627,28 @@ public class SortedSetCommandsTest extends DatasourceTestBase {
     }
 
     @Test
+    void zsscanEmpty() {
+        ZScanCursor<Place> cursor = setOfPlaces.zscan(key);
+        assertThat(cursor.cursorId()).isEqualTo(Cursor.INITIAL_CURSOR_ID);
+        assertThat(cursor.hasNext()).isTrue();
+        List<ScoredValue<Place>> values = cursor.next();
+        assertThat(cursor.cursorId()).isEqualTo(0);
+        assertThat(cursor.hasNext()).isFalse();
+        assertThat(values).isEmpty();
+    }
+
+    @Test
+    void zsscanEmptyAsIterable() {
+        ZScanCursor<Place> cursor = setOfPlaces.zscan(key);
+        assertThat(cursor.cursorId()).isEqualTo(Cursor.INITIAL_CURSOR_ID);
+        assertThat(cursor.hasNext()).isTrue();
+        Iterable<ScoredValue<Place>> iterable = cursor.toIterable();
+        assertThat(iterable).isEmpty();
+        assertThat(cursor.cursorId()).isEqualTo(0);
+        assertThat(cursor.hasNext()).isFalse();
+    }
+
+    @Test
     void zsscanWithCursorAndArgs() {
         setOfPlaces.zadd(key, 1.0, Place.crussol);
         setOfPlaces.zadd(key, 2.0, Place.grignan);
@@ -655,6 +673,23 @@ public class SortedSetCommandsTest extends DatasourceTestBase {
         List<ScoredValue<String>> values = new ArrayList<>();
         while (cursor.hasNext()) {
             values.addAll(cursor.next());
+        }
+        assertThat(cursor.cursorId()).isEqualTo(0L);
+        assertThat(cursor.hasNext()).isFalse();
+        assertThat(values).hasSize(100);
+    }
+
+    @Test
+    void zscanMultipleAsITerable() {
+        populateManyStringEntries();
+
+        ZScanCursor<String> cursor = setOfStrings.zscan(key, new ScanArgs().count(5));
+        assertThat(cursor).isNotNull();
+        assertThat(cursor.hasNext()).isTrue();
+
+        List<ScoredValue<String>> values = new ArrayList<>();
+        for (ScoredValue<String> scoredValue : cursor.toIterable()) {
+            values.add(scoredValue);
         }
         assertThat(cursor.cursorId()).isEqualTo(0L);
         assertThat(cursor.hasNext()).isFalse();

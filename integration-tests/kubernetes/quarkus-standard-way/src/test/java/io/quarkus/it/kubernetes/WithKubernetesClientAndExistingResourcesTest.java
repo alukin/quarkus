@@ -12,9 +12,9 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.quarkus.bootstrap.model.AppArtifact;
 import io.quarkus.builder.Version;
 import io.quarkus.kubernetes.spi.CustomProjectRootBuildItem;
+import io.quarkus.maven.dependency.Dependency;
 import io.quarkus.test.ProdBuildResults;
 import io.quarkus.test.ProdModeTestResults;
 import io.quarkus.test.QuarkusProdModeTest;
@@ -30,8 +30,7 @@ public class WithKubernetesClientAndExistingResourcesTest {
             .withConfigurationResource("kubernetes-with-" + APPLICATION_NAME + ".properties")
             .addCustomResourceEntry(Path.of("src", "main", "kubernetes", "kubernetes.yml"),
                     "manifests/kubernetes-with-" + APPLICATION_NAME + "/kubernetes.yml")
-            .setForcedDependencies(Collections.singletonList(
-                    new AppArtifact("io.quarkus", "quarkus-kubernetes-client", Version.getVersion())))
+            .setForcedDependencies(List.of(Dependency.of("io.quarkus", "quarkus-kubernetes-client", Version.getVersion())))
             .addBuildChainCustomizerEntries(
                     new QuarkusProdModeTest.BuildChainCustomizerEntry(
                             KubernetesWithCustomResourcesTest.CustomProjectRootBuildItemProducerProdMode.class,
@@ -51,7 +50,12 @@ public class WithKubernetesClientAndExistingResourcesTest {
 
         assertThat(kubernetesList).filteredOn(h -> "Deployment".equals(h.getKind())).allSatisfy(h -> {
             Deployment deployment = (Deployment) h;
-            assertThat(deployment.getSpec().getTemplate().getSpec().getServiceAccountName()).isEqualTo(APPLICATION_NAME);
+            String serviceAccountName = deployment.getSpec().getTemplate().getSpec().getServiceAccountName();
+            if (h.getMetadata().getName().equals(APPLICATION_NAME)) {
+                assertThat(serviceAccountName).isEqualTo(APPLICATION_NAME);
+            } else {
+                assertThat(serviceAccountName).isNull();
+            }
         });
 
         assertThat(kubernetesList).filteredOn(h -> "ServiceAccount".equals(h.getKind())).singleElement().satisfies(h -> {

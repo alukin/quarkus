@@ -78,7 +78,7 @@ public class ConfigPropertiesBuildStep {
             } else if (target.kind() == AnnotationTarget.Kind.METHOD_PARAMETER) {
                 final MethodParameterInfo parameter = target.asMethodParameter();
                 short position = parameter.position();
-                classInfo = index.getClassByName(parameter.method().parameters().get(position).name());
+                classInfo = index.getClassByName(parameter.method().parameterType(position).name());
             } else {
                 break;
             }
@@ -175,7 +175,8 @@ public class ConfigPropertiesBuildStep {
                 boolean needsValidation = classConfigPropertiesUtil.addProducerMethodForClassConfigProperties(
                         Thread.currentThread().getContextClassLoader(), classInfo,
                         configPropertiesMetadata.getPrefix(), configPropertiesMetadata.getNamingStrategy(),
-                        configPropertiesMetadata.isFailOnMismatchingMember(), configPropertiesMetadata.isNeedsQualifier());
+                        configPropertiesMetadata.isFailOnMismatchingMember(), configPropertiesMetadata.isNeedsQualifier(),
+                        configPropertiesMetadata.getInstanceFactory());
                 if (needsValidation) {
                     configClassesThatNeedValidation.add(classInfo.name());
                 }

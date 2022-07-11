@@ -344,14 +344,19 @@ public class SecurityProcessor {
     void addBouncyCastleExportsToNativeImage(BuildProducer<JPMSExportBuildItem> jpmsExports,
             List<BouncyCastleProviderBuildItem> bouncyCastleProviders,
             List<BouncyCastleJsseProviderBuildItem> bouncyCastleJsseProviders) {
+        boolean isInFipsMode;
+
         Optional<BouncyCastleJsseProviderBuildItem> bouncyCastleJsseProvider = getOne(bouncyCastleJsseProviders);
-        if (bouncyCastleJsseProvider.isPresent() && bouncyCastleJsseProvider.get().isInFipsMode()) {
-            jpmsExports.produce(new JPMSExportBuildItem("java.base", "sun.security.internal.spec"));
+        if (bouncyCastleJsseProvider.isPresent()) {
+            isInFipsMode = bouncyCastleJsseProvider.get().isInFipsMode();
         } else {
             Optional<BouncyCastleProviderBuildItem> bouncyCastleProvider = getOne(bouncyCastleProviders);
-            if (bouncyCastleProvider.isPresent() && bouncyCastleProvider.get().isInFipsMode()) {
-                jpmsExports.produce(new JPMSExportBuildItem("java.base", "sun.security.internal.spec"));
-            }
+            isInFipsMode = bouncyCastleProvider.isPresent() && bouncyCastleProvider.get().isInFipsMode();
+        }
+
+        if (isInFipsMode) {
+            jpmsExports.produce(new JPMSExportBuildItem("java.base", "sun.security.internal.spec"));
+            jpmsExports.produce(new JPMSExportBuildItem("java.base", "sun.security.provider"));
         }
     }
 
@@ -472,9 +477,9 @@ public class SecurityProcessor {
         for (Map.Entry<MethodInfo, SecurityCheck> methodEntry : securityChecks
                 .entrySet()) {
             MethodInfo method = methodEntry.getKey();
-            String[] params = new String[method.parameters().size()];
-            for (int i = 0; i < method.parameters().size(); ++i) {
-                params[i] = method.parameters().get(i).name().toString();
+            String[] params = new String[method.parametersCount()];
+            for (int i = 0; i < method.parametersCount(); ++i) {
+                params[i] = method.parameterType(i).name().toString();
             }
             recorder.addMethod(builder, method.declaringClass().name().toString(), method.name(), params,
                     methodEntry.getValue());
