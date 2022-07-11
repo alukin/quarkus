@@ -55,6 +55,7 @@ import org.jboss.jandex.DotName;
 import org.xerial.snappy.OSInfo;
 
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
+import io.quarkus.arc.deployment.BeanContainerBuildItem;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
 import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
 import io.quarkus.deployment.Capabilities;
@@ -91,8 +92,13 @@ import io.quarkus.kafka.client.serialization.JsonbSerializer;
 import io.quarkus.kafka.client.serialization.ObjectMapperDeserializer;
 import io.quarkus.kafka.client.serialization.ObjectMapperSerializer;
 import io.quarkus.smallrye.health.deployment.spi.HealthBuildItem;
+import io.quarkus.vertx.http.deployment.BodyHandlerBuildItem;
+import io.quarkus.vertx.http.deployment.HttpRootPathBuildItem;
 import io.quarkus.vertx.http.deployment.NonApplicationRootPathBuildItem;
+import io.quarkus.vertx.http.deployment.RouteBuildItem;
 import io.quarkus.vertx.http.deployment.VertxWebRouterBuildItem;
+import io.quarkus.vertx.http.deployment.WebsocketSubProtocolsBuildItem;
+import io.quarkus.vertx.http.deployment.webjar.WebJarResultsBuildItem;
 
 public class KafkaProcessor {
 
@@ -505,6 +511,22 @@ public class KafkaProcessor {
                 .build();
     }
 
+    @Record(ExecutionTime.RUNTIME_INIT)
+    @BuildStep
+    @Consume(BeanContainerBuildItem.class)
+    void buildExecutionEndpoint(
+            BuildProducer<RouteBuildItem> routeProducer,
+            HttpRootPathBuildItem httpRootPathBuildItem,
+            KafkaDevUIRecorder recorder,
+            ShutdownContextBuildItem shutdownContext,
+            LaunchModeBuildItem launchMode,
+            BodyHandlerBuildItem bodyHandlerBuildItem,
+            KafkaBuildTimeConfig buildConfig,
+            BeanContainerBuildItem beanContainer,
+            BuildProducer<WebsocketSubProtocolsBuildItem> webSocketSubProtocols) {
+
+    }
+
     @BuildStep
     @Record(ExecutionTime.RUNTIME_INIT)
     public void registerKafkaUiHandler(
@@ -514,7 +536,7 @@ public class KafkaProcessor {
             LaunchModeBuildItem launchMode,
             NonApplicationRootPathBuildItem nonApplicationRootPathBuildItem,
             KafkaBuildTimeConfig buildConfig,
-            //WebJarResultsBuildItem webJarResultsBuildItem,
+            WebJarResultsBuildItem webJarResultsBuildItem,
             VertxWebRouterBuildItem vertxWebRouterBuildItem,
             ShutdownContextBuildItem shutdownContext) {
 

@@ -9,12 +9,13 @@
     </parent>
     
     <artifactId>quarkus-kafka-client-ui</artifactId>
-    <packaging>jar</packaging>
-    
+    <packaging>jar</packaging>   
     <name>Quarkus - Kafka - Client - UI</name>
-    
+
     <properties>
         <path.kafkaui>kafka-ui</path.kafkaui>
+        <json-rpc.version>1.3.0</json-rpc.version>
+        <bootstrap-mutiliselect.version>0.9.15</bootstrap-mutiliselect.version>
     </properties>
     
     <dependencies>
@@ -32,8 +33,19 @@
         <dependency>
             <groupId>org.webjars</groupId>
             <artifactId>jquery</artifactId>
-            <scope>provided</scope>
+            <scope>provided</scope>            
         </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>bootstrap-multiselect</artifactId>
+            <version>${bootstrap-mutiliselect.version}</version>           
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>json-rpc-2.0</artifactId>
+            <version>${json-rpc.version}</version>          
+        </dependency>
+        
     </dependencies>
     
     <build>            
@@ -68,7 +80,7 @@
                 <version>3.3.0</version>
                 <executions>
                     <execution>
-                        <id>install-jS</id>
+                        <id>install-js</id>
                         <phase>generate-sources</phase>
                         <goals>
                             <goal>unpack</goal>
@@ -103,7 +115,7 @@
                                 <artifactItem>
                                     <groupId>org.webjars</groupId>
                                     <artifactId>bootstrap-multiselect</artifactId>
-                                    <version>0.9.15</version>
+                                    <version>${bootstrap-mutiliselect.version}</version>
                                     <type>jar</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.build.directory}/classes/META-INF/resources/${path.kafkaui}/js/</outputDirectory>
@@ -115,7 +127,7 @@
                                 <artifactItem>
                                     <groupId>org.webjars</groupId>
                                     <artifactId>bootstrap-multiselect</artifactId>
-                                    <version>0.9.15</version>
+                                    <version>${bootstrap-mutiliselect.version}</version>
                                     <type>jar</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.build.directory}/classes/META-INF/resources/${path.kafkaui}/css/</outputDirectory>
@@ -166,7 +178,7 @@
                                 <artifactItem>
                                     <groupId>org.webjars.npm</groupId>
                                     <artifactId>json-rpc-2.0</artifactId>
-                                    <version>1.3.0</version>
+                                    <version>${json-rpc.version}</version>
                                     <type>jar</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.build.directory}/classes/META-INF/resources/${path.kafkaui}/json-rpc/</outputDirectory>
@@ -180,6 +192,7 @@
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
         
     </build>
