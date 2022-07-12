@@ -50,7 +50,9 @@
     
     <build>            
         <!-- Copy all web content files META-INF folder, and push it though a filter to replace maven properties -->
-        <resources>
+        <!-- the defintion below causes problems with path in test modules that use quarkus-maven-plugin code generation -->
+        <!--  e.g. project project reactive-messaging-hibernate-reactive -->
+        <!--        <resources>
             <resource>
                 <directory>${basedir}/src/main/resources</directory>
             </resource>
@@ -70,9 +72,32 @@
                     <exclude>**/*.html</exclude>
                 </excludes>
             </resource>
-        </resources>
+        </resources>-->
         
         <plugins>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-web</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/classes/META-INF/resources/${path.kafkaui}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/src/main/webapp</directory>
+                                    <includes>
+                                        <include>**/*.*</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>      
             <!-- So we don't have to keep a version of these javascript libs in our repo -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -87,7 +112,7 @@
                         </goals>
                         <configuration>
                             <artifactItems> 
-                            <!-- Bootstrap -->
+                                <!-- Bootstrap -->
                                 <artifactItem>
                                     <groupId>org.webjars</groupId>
                                     <artifactId>bootstrap</artifactId>

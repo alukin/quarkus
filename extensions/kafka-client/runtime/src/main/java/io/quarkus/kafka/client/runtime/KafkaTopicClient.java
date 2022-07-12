@@ -25,9 +25,9 @@ import org.apache.kafka.common.serialization.BytesSerializer;
 import org.apache.kafka.common.utils.Bytes;
 
 import io.quarkus.kafka.client.runtime.converter.KafkaModelConverter;
-import io.quarkus.kafka.client.runtime.devui.model.KafkaMessagePage;
-import io.quarkus.kafka.client.runtime.devui.model.Order;
-import io.quarkus.kafka.client.runtime.devui.model.request.KafkaMessageCreateRequest;
+import io.quarkus.kafka.client.runtime.ui.model.KafkaMessagePage;
+import io.quarkus.kafka.client.runtime.ui.model.Order;
+import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessageCreateRequest;
 import io.smallrye.common.annotation.Identifier;
 
 @Singleton
