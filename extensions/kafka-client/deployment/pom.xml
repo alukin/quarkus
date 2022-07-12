@@ -73,7 +73,6 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-kafka-client-ui</artifactId>
-            <version>999-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
