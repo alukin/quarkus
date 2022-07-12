@@ -61,6 +61,14 @@ public class KafkaUiUtils {
         return res;
     }
 
+    public long getTopicMessageCount(String topicName) throws ExecutionException, InterruptedException {
+        var partitions = kafkaTopicClient.partitions(topicName);
+        var maxPartitionOffsetMap = kafkaTopicClient.getPagePartitionOffset(topicName, partitions, Order.NEW_FIRST);
+        return maxPartitionOffsetMap.values().stream()
+                .reduce(Long::sum)
+                .orElse(0L);
+    }
+
     public List<KafkaConsumerGroup> getConsumerGroups() throws InterruptedException, ExecutionException {
         List<KafkaConsumerGroup> res = new ArrayList<>();
         for (ConsumerGroupListing cgl : kafkaAdminClient.getConsumerGroups()) {
@@ -87,11 +95,12 @@ public class KafkaUiUtils {
         return res;
     }
 
-    private KafkaTopic kafkaTopic(TopicListing tl) {
+    private KafkaTopic kafkaTopic(TopicListing tl) throws ExecutionException, InterruptedException {
         KafkaTopic kt = new KafkaTopic();
         kt.name = tl.name();
         kt.internal = tl.isInternal();
         kt.topicId = tl.topicId().toString();
+        kt.nmsg = getTopicMessageCount(kt.name);
         return kt;
     }
 
