@@ -172,9 +172,9 @@ public class KafkaTopicClient {
         for (var partition : oldPartitionOffset.keySet()) {
             // We should add in case we seek for oldest and reduce for newest.
             var multiplier = Order.OLD_FIRST == order ? 1 : -1;
-            long position = getPosition(topicName, partition, order);
-            var newOffset = oldPartitionOffset.get(partition) +
-                    multiplier * newOffsets.getOrDefault(partition, position);
+
+            // If new offset for partition is not there in the map - we didn't have records for that partition. So, just take the old offset.
+            var newOffset = oldPartitionOffset.get(partition) + multiplier * newOffsets.getOrDefault(partition, 0L);
             newPartitionOffset.put(partition, newOffset);
         }
         return newPartitionOffset;
