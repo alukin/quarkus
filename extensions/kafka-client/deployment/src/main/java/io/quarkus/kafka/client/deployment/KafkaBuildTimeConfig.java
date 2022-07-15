@@ -24,17 +24,21 @@ public class KafkaBuildTimeConfig {
     public boolean snappyEnabled;
 
     /**
-     * Whether or not to enable Kafka Dev UI in non-development native mode.
+     * Whether or not to enable Kafka UI in non-development native mode.
      */
-    @ConfigItem(name = "devui.enabled", defaultValue = "false")
-    public boolean devUiEnabled;
+    @ConfigItem(name = "ui.enabled", defaultValue = "false")
+    public boolean uiEnabled;
 
     /**
      * Whether or not to enable Kafka Dev UI in non-development native mode.
      */
-    @ConfigItem(name = "devui.rootpath", defaultValue = "kafka-ui")
-    public String devUiRootPath;
-
+    @ConfigItem(name = "ui.rootpath", defaultValue = "kafka-ui")
+    public String uiRootPath;
+    /**
+     * Whether or not to enable Kafka Dev UI in non-development native mode.
+     */
+    @ConfigItem(name = "ui.handlerpath", defaultValue = "kafka-admin")
+    public String handlerRootPath;
     /**
      * Whether or not the Kafka is running in RHOSAKe.
      */
