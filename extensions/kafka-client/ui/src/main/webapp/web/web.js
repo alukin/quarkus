@@ -1,6 +1,6 @@
 export function doPost(data, successCallback, errorCallback) {
     $.ajax({
-        url: 'kafka-admin',
+        url: '/q/kafka-admin',
         type: 'POST',
         data: JSON.stringify(data),
         contentType: "application/json; charset=utf-8",

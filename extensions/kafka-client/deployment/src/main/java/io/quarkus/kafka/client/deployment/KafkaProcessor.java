@@ -159,7 +159,7 @@ public class KafkaProcessor {
     // For the UI
     private static final GACT KAFKA_UI_WEBJAR_ARTIFACT_KEY = new GACT("io.quarkus", "quarkus-kafka-client-ui", null, "jar");
     private static final String KAFKA_UI_WEBJAR_STATIC_RESOURCES_PATH = "META-INF/resources/kafka-ui/";
-    private static final String FILE_TO_UPDATE = "render.js";
+    private static final String FILE_TO_UPDATE = "index.html";
     private static final String LINE_TO_UPDATE = "const api = '";
     private static final String LINE_FORMAT = LINE_TO_UPDATE + "%s';";
     private static final String UI_LINE_TO_UPDATE = "const ui = '";
@@ -569,11 +569,11 @@ public class KafkaProcessor {
                 + " =======================");
 
         if (shouldIncludeUi(launchMode, buildConfig)) {
-
+            String handlerPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.handlerRootPath);
             //setup http request calls handler
             Handler<RoutingContext> executionHandler = recorder.kafkaControlHandler();
             HttpRootPathBuildItem.Builder requestBuilder = httpRootPathBuildItem.routeBuilder()
-                    .routeFunction(buildConfig.handlerRootPath, recorder.routeFunction(bodyHandlerBuildItem.getHandler()))
+                    .routeFunction(handlerPath, recorder.routeFunction(bodyHandlerBuildItem.getHandler()))
                     .handler(executionHandler)
                     .routeConfigKey("quarkus.kafka-client-ui.root-path")
                     .displayOnNotFoundPage("Kafka UI Endpoint");
@@ -590,8 +590,7 @@ public class KafkaProcessor {
             KafkaBuildTimeConfig buildConfig,
             BuildProducer<WebJarBuildItem> webJarBuildProducer) {
 
-        System.out.println(
-                "====================== getKafkaUiFinalDestination " + buildConfig.uiRootPath + " =======================");
+        System.out.println("================ getKafkaUiFinalDestination " + buildConfig.uiRootPath + " ===========");
 
         if (shouldIncludeUi(launchMode, buildConfig)) {
 
@@ -600,13 +599,13 @@ public class KafkaProcessor {
                         "quarkus.kafka-client-ui.root-path was set to \"/\", this is not allowed as it blocks the application from serving anything else.",
                         Collections.singleton("quarkus.kafka-client-ui.root-path"));
             }
-            //
+
             String devUiPath = nonApplicationRootPathBuildItem.resolvePath("dev");
             String kafkaUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.uiRootPath);
             String kafkaHandlerPath = httpRootPath.resolvePath(buildConfig.handlerRootPath);
             webJarBuildProducer.produce(
-                    WebJarBuildItem.builder().artifactKey(KAFKA_UI_WEBJAR_ARTIFACT_KEY) //
-                            .root(KAFKA_UI_WEBJAR_STATIC_RESOURCES_PATH) //
+                    WebJarBuildItem.builder().artifactKey(KAFKA_UI_WEBJAR_ARTIFACT_KEY)
+                            .root(KAFKA_UI_WEBJAR_STATIC_RESOURCES_PATH)
                             .filter(new WebJarResourcesFilter() {
                                 @Override
                                 public WebJarResourcesFilter.FilterResult apply(String fileName, InputStream file)
@@ -650,14 +649,18 @@ public class KafkaProcessor {
 
         WebJarResultsBuildItem.WebJarResult result = webJarResultsBuildItem.byArtifactKey(KAFKA_UI_WEBJAR_ARTIFACT_KEY);
         if (result == null) {
+            System.out.println("========== WebJarResult is null ============");
             return;
         }
 
-        if (shouldIncludeUi(launchMode, buildConfig)) {
-            String graphQLUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.uiRootPath);
+        System.out.println("========== WebJarResult is OK ============");
 
-            Handler<RoutingContext> handler = recorder.uiHandler(result.getFinalDestination(),
-                    graphQLUiPath, result.getWebRootConfigurations(), shutdownContext);
+        if (shouldIncludeUi(launchMode, buildConfig)) {
+            String kafkaUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.uiRootPath);
+            String finalDestination = result.getFinalDestination();
+            System.out.println("========== WebJar paths: " + kafkaUiPath + ", " + finalDestination);
+            Handler<RoutingContext> handler = recorder.uiHandler(finalDestination,
+                    kafkaUiPath, result.getWebRootConfigurations(), shutdownContext);
             routeProducer.produce(nonApplicationRootPathBuildItem.routeBuilder()
                     .route(buildConfig.uiRootPath)
                     .displayOnNotFoundPage("Kafka UI")
