@@ -1,5 +1,6 @@
 package io.quarkus.kafka.client.deployment;
 
+import io.quarkus.runtime.annotations.ConfigDocSection;
 import io.quarkus.runtime.annotations.ConfigItem;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
@@ -24,23 +25,7 @@ public class KafkaBuildTimeConfig {
     public boolean snappyEnabled;
 
     /**
-     * Whether or not to enable Kafka UI in non-development native mode.
-     */
-    @ConfigItem(name = "ui.enabled", defaultValue = "true")
-    public boolean uiEnabled;
-
-    /**
-     * Whether or not to enable Kafka Dev UI in non-development native mode.
-     */
-    @ConfigItem(name = "ui.rootpath", defaultValue = "kafka-ui")
-    public String uiRootPath;
-    /**
-     * Whether or not to enable Kafka Dev UI in non-development native mode.
-     */
-    @ConfigItem(name = "ui.handlerpath", defaultValue = "kafka-admin")
-    public String handlerRootPath;
-    /**
-     * Whether or not the Kafka is running in RHOSAKe.
+     * Whether or not the Kafka is running in RHOSAK.
      */
     @ConfigItem(name = "rhosak.isUsed", defaultValue = "false")
     public boolean rhosakIsUsed;
@@ -50,4 +35,11 @@ public class KafkaBuildTimeConfig {
      */
     @ConfigItem
     public KafkaDevServicesBuildTimeConfig devservices;
+
+    /**
+     * Kafka UI configuration
+     */
+    @ConfigItem
+    @ConfigDocSection
+    public KafkaBuildTimeUiConfig ui;
 }
