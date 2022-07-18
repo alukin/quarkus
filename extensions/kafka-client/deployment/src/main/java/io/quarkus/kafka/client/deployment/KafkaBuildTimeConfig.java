@@ -26,7 +26,7 @@ public class KafkaBuildTimeConfig {
     /**
      * Whether or not to enable Kafka UI in non-development native mode.
      */
-    @ConfigItem(name = "ui.enabled", defaultValue = "false")
+    @ConfigItem(name = "ui.enabled", defaultValue = "true")
     public boolean uiEnabled;
 
     /**
