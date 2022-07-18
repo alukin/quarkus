@@ -159,12 +159,12 @@ public class KafkaProcessor {
     // For the UI
     private static final GACT KAFKA_UI_WEBJAR_ARTIFACT_KEY = new GACT("io.quarkus", "quarkus-kafka-client-ui", null, "jar");
     private static final String KAFKA_UI_WEBJAR_STATIC_RESOURCES_PATH = "META-INF/resources/kafka-ui/";
-    private static final String FILE_TO_UPDATE = "index.html";
-    private static final String LINE_TO_UPDATE = "const api = '";
+    private static final String FILE_TO_UPDATE = "config.js";
+    private static final String LINE_TO_UPDATE = "export const api = '";
     private static final String LINE_FORMAT = LINE_TO_UPDATE + "%s';";
-    private static final String UI_LINE_TO_UPDATE = "const ui = '";
+    private static final String UI_LINE_TO_UPDATE = "export const ui = '";
     private static final String UI_LINE_FORMAT = UI_LINE_TO_UPDATE + "%s';";
-    private static final String LOGO_LINE_TO_UPDATE = "const logo = '";
+    private static final String LOGO_LINE_TO_UPDATE = "export const logo = '";
     private static final String LOGO_LINE_FORMAT = LOGO_LINE_TO_UPDATE + "%s';";
 
     @BuildStep
@@ -187,7 +187,8 @@ public class KafkaProcessor {
 
         List<String> ignoredMessages = new ArrayList<>();
         for (String ignoredConfigProperty : ignoredConfigProperties) {
-            ignoredMessages.add("The configuration '" + ignoredConfigProperty + "' was supplied but isn't a known config.");
+            ignoredMessages
+                    .add("The configuration '" + ignoredConfigProperty + "' was supplied but isn't a known config.");
         }
 
         logCleanupFilters.produce(new LogCleanupFilterBuildItem("org.apache.kafka.clients.consumer.ConsumerConfig",
@@ -565,11 +566,8 @@ public class KafkaProcessor {
             BodyHandlerBuildItem bodyHandlerBuildItem,
             ShutdownContextBuildItem shutdownContext) {
 
-        System.out.println("====================== registerKafkaUiExecHandler path: " + buildConfig.handlerRootPath
-                + " =======================");
-
         if (shouldIncludeUi(launchMode, buildConfig)) {
-            String handlerPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.handlerRootPath);
+            String handlerPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.ui.handlerRootPath);
             //setup http request calls handler
             Handler<RoutingContext> executionHandler = recorder.kafkaControlHandler();
             HttpRootPathBuildItem.Builder requestBuilder = httpRootPathBuildItem.routeBuilder()
@@ -590,19 +588,19 @@ public class KafkaProcessor {
             KafkaBuildTimeConfig buildConfig,
             BuildProducer<WebJarBuildItem> webJarBuildProducer) {
 
-        System.out.println("================ getKafkaUiFinalDestination " + buildConfig.uiRootPath + " ===========");
+        System.out.println("================ getKafkaUiFinalDestination " + buildConfig.ui.rootPath + " ===========");
 
         if (shouldIncludeUi(launchMode, buildConfig)) {
 
-            if ("/".equals(buildConfig.uiRootPath)) {
+            if ("/".equals(buildConfig.ui.rootPath)) {
                 throw new ConfigurationException(
                         "quarkus.kafka-client-ui.root-path was set to \"/\", this is not allowed as it blocks the application from serving anything else.",
                         Collections.singleton("quarkus.kafka-client-ui.root-path"));
             }
 
             String devUiPath = nonApplicationRootPathBuildItem.resolvePath("dev");
-            String kafkaUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.uiRootPath);
-            String kafkaHandlerPath = httpRootPath.resolvePath(buildConfig.handlerRootPath);
+            String kafkaUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.ui.rootPath);
+            String kafkaHandlerPath = httpRootPath.resolvePath(buildConfig.ui.handlerRootPath);
             webJarBuildProducer.produce(
                     WebJarBuildItem.builder().artifactKey(KAFKA_UI_WEBJAR_ARTIFACT_KEY)
                             .root(KAFKA_UI_WEBJAR_STATIC_RESOURCES_PATH)
@@ -645,7 +643,7 @@ public class KafkaProcessor {
             ShutdownContextBuildItem shutdownContext) {
 
         System.out.println(
-                "====================== registerKafkaUiHandler " + buildConfig.uiRootPath + " =======================");
+                "====================== registerKafkaUiHandler " + buildConfig.ui.rootPath + " =======================");
 
         WebJarResultsBuildItem.WebJarResult result = webJarResultsBuildItem.byArtifactKey(KAFKA_UI_WEBJAR_ARTIFACT_KEY);
         if (result == null) {
@@ -656,20 +654,20 @@ public class KafkaProcessor {
         System.out.println("========== WebJarResult is OK ============");
 
         if (shouldIncludeUi(launchMode, buildConfig)) {
-            String kafkaUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.uiRootPath);
+            String kafkaUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.ui.rootPath);
             String finalDestination = result.getFinalDestination();
             System.out.println("========== WebJar paths: " + kafkaUiPath + ", " + finalDestination);
             Handler<RoutingContext> handler = recorder.uiHandler(finalDestination,
                     kafkaUiPath, result.getWebRootConfigurations(), shutdownContext);
             routeProducer.produce(nonApplicationRootPathBuildItem.routeBuilder()
-                    .route(buildConfig.uiRootPath)
+                    .route(buildConfig.ui.rootPath)
                     .displayOnNotFoundPage("Kafka UI")
                     .routeConfigKey("quarkus.kafka-client.ui.root-path")
                     .handler(handler)
                     .build());
 
             routeProducer.produce(nonApplicationRootPathBuildItem.routeBuilder()
-                    .route(buildConfig.uiRootPath + "*")
+                    .route(buildConfig.ui.rootPath + "*")
                     .handler(handler)
                     .build());
 
@@ -700,7 +698,7 @@ public class KafkaProcessor {
 
     private static boolean shouldIncludeUi(LaunchModeBuildItem launchMode, KafkaBuildTimeConfig config) {
         System.out.println("************ launch mode: " + launchMode.getLaunchMode());
-        System.out.println("************ ui enabled: " + config.uiEnabled);
-        return launchMode.getLaunchMode().isDevOrTest() || config.uiEnabled;
+        System.out.println("************ ui enabled: " + config.ui.alwaysInclude);
+        return launchMode.getLaunchMode().isDevOrTest() || config.ui.alwaysInclude;
     }
 }
