@@ -16,13 +16,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.quarkus.kafka.client.runtime.converter.KafkaModelConverter;
-import io.quarkus.kafka.client.runtime.ui.model.KafkaClusterInfo;
-import io.quarkus.kafka.client.runtime.ui.model.KafkaConsumerGroup;
-import io.quarkus.kafka.client.runtime.ui.model.KafkaInfo;
-import io.quarkus.kafka.client.runtime.ui.model.KafkaMessagePage;
-import io.quarkus.kafka.client.runtime.ui.model.KafkaNode;
-import io.quarkus.kafka.client.runtime.ui.model.KafkaTopic;
-import io.quarkus.kafka.client.runtime.ui.model.Order;
+import io.quarkus.kafka.client.runtime.ui.model.*;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessageCreateRequest;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessagesRequest;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaOffsetRequest;
@@ -62,8 +56,8 @@ public class KafkaUiUtils {
         return res;
     }
 
-    public long getTopicMessageCount(String topicName) throws ExecutionException, InterruptedException {
-        var partitions = kafkaTopicClient.partitions(topicName);
+    public long getTopicMessageCount(String topicName, List<Integer> partitions)
+            throws ExecutionException, InterruptedException {
         var maxPartitionOffsetMap = kafkaTopicClient.getPagePartitionOffset(topicName, partitions, Order.NEW_FIRST);
         return maxPartitionOffsetMap.values().stream()
                 .reduce(Long::sum)
@@ -101,7 +95,9 @@ public class KafkaUiUtils {
         kt.name = tl.name();
         kt.internal = tl.isInternal();
         kt.topicId = tl.topicId().toString();
-        kt.nmsg = getTopicMessageCount(kt.name);
+        var partitions = kafkaTopicClient.partitions(kt.name);
+        kt.partitionsCount = partitions.size();
+        kt.nmsg = getTopicMessageCount(kt.name, partitions);
         return kt;
     }
 
