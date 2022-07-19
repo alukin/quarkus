@@ -91,10 +91,9 @@ import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildI
 import io.quarkus.deployment.builditem.nativeimage.ServiceProviderBuildItem;
 import io.quarkus.deployment.logging.LogCleanupFilterBuildItem;
 import io.quarkus.deployment.pkg.NativeConfig;
-
 import io.quarkus.kafka.client.runtime.*;
-
 import io.quarkus.kafka.client.runtime.KafkaRuntimeConfigProducer;
+import io.quarkus.kafka.client.runtime.converter.KafkaModelConverter;
 import io.quarkus.kafka.client.serialization.BufferDeserializer;
 import io.quarkus.kafka.client.serialization.BufferSerializer;
 import io.quarkus.kafka.client.serialization.JsonArrayDeserializer;
