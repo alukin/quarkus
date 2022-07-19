@@ -11,7 +11,6 @@ import io.quarkus.kafka.client.runtime.ui.model.KafkaMessage;
 
 @Singleton
 public class KafkaModelConverter {
-
     public KafkaMessage convert(ConsumerRecord<Bytes, Bytes> message) {
         return new KafkaMessage(
                 message.topic(),

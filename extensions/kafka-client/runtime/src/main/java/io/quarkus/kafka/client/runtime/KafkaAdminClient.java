@@ -2,20 +2,14 @@ package io.quarkus.kafka.client.runtime;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.ConsumerGroupListing;
-import org.apache.kafka.clients.admin.CreateTopicsResult;
-import org.apache.kafka.clients.admin.DeleteTopicsResult;
-import org.apache.kafka.clients.admin.DescribeClusterResult;
-import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.admin.TopicListing;
+import org.apache.kafka.clients.admin.*;
 import org.jboss.logging.Logger;
 
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaCreateTopicRequest;
@@ -57,8 +51,12 @@ public class KafkaAdminClient {
         return client.listTopics().listings().get();
     }
 
-    public Collection<ConsumerGroupListing> getConsumerGroups() throws InterruptedException, ExecutionException {
-        return client.listConsumerGroups().all().get();
+    public Collection<ConsumerGroupDescription> getConsumerGroups() throws InterruptedException, ExecutionException {
+        var consumerGroupIds = client.listConsumerGroups().all().get().stream()
+                .map(ConsumerGroupListing::groupId)
+                .collect(Collectors.toList());
+        return client.describeConsumerGroups(consumerGroupIds).all().get()
+                .values();
     }
 
     public boolean deleteTopic(String name) {
@@ -76,5 +74,9 @@ public class KafkaAdminClient {
 
         CreateTopicsResult ctr = client.createTopics(List.of(newTopic));
         return ctr.values() != null;
+    }
+
+    public ListConsumerGroupOffsetsResult listConsumerGroupOffsets(String groupId) {
+        return getAdminClient().listConsumerGroupOffsets(groupId);
     }
 }
