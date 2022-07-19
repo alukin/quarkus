@@ -1,6 +1,8 @@
+import {api} from "../config.js"
+
 export function doPost(data, successCallback, errorCallback) {
     $.ajax({
-        url: '/q/kafka-admin',
+        url: api,
         type: 'POST',
         data: JSON.stringify(data),
         contentType: "application/json; charset=utf-8",
