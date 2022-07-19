@@ -13,7 +13,6 @@ import io.quarkus.bootstrap.workspace.WorkspaceModule;
 import io.quarkus.maven.dependency.ArtifactCoords;
 import io.quarkus.maven.dependency.ArtifactKey;
 import io.quarkus.maven.dependency.DependencyFlags;
-import io.quarkus.maven.dependency.GACTV;
 import io.quarkus.maven.dependency.ResolvedDependencyBuilder;
 import io.quarkus.paths.PathList;
 import io.quarkus.paths.PathTree;
@@ -25,12 +24,10 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -92,7 +89,6 @@ public class ApplicationDependencyTreeResolver {
     private final Deque<Collection<Exclusion>> exclusionStack = new ArrayDeque<>();
 
     private final Map<ArtifactCoords, Set<ArtifactKey>> artifactDeps = new HashMap<>();
-    private final Map<ArtifactKey, ResolvedDependencyBuilder> appDeps = new LinkedHashMap<>();
 
     private MavenArtifactResolver resolver;
     private List<Dependency> managedDeps;
@@ -162,7 +158,7 @@ public class ApplicationDependencyTreeResolver {
 
         visitRuntimeDependencies(root.getChildren());
 
-        List<ConditionalDependency> activatedConditionalDeps = Collections.emptyList();
+        List<ConditionalDependency> activatedConditionalDeps = List.of();
 
         if (!conditionalDepsToProcess.isEmpty()) {
             activatedConditionalDeps = new ArrayList<>();
@@ -206,21 +202,22 @@ public class ApplicationDependencyTreeResolver {
 
         root = normalize(originalSession, root);
 
-        final BuildDependencyGraphVisitor buildDepsVisitor = new BuildDependencyGraphVisitor(originalResolver, appDeps,
+        final BuildDependencyGraphVisitor buildDepsVisitor = new BuildDependencyGraphVisitor(originalResolver, appBuilder,
                 buildTreeConsumer);
         buildDepsVisitor.visit(root);
 
         if (!CONVERGED_TREE_ONLY && collectReloadableModules) {
-            final Set<ArtifactKey> visited = new HashSet<>();
-            for (ResolvedDependencyBuilder db : appDeps.values()) {
-                if (!db.isFlagSet(DependencyFlags.RELOADABLE)) {
-                    clearReloadableFlag(db, visited);
+            for (ResolvedDependencyBuilder db : appBuilder.getDependencies()) {
+                if (db.isFlagSet(DependencyFlags.RELOADABLE | DependencyFlags.VISITED)) {
+                    continue;
                 }
+                clearReloadableFlag(db);
             }
         }
 
-        for (ResolvedDependencyBuilder db : appDeps.values()) {
-            appBuilder.addDependency(db.build());
+        for (ResolvedDependencyBuilder db : appBuilder.getDependencies()) {
+            db.clearFlag(DependencyFlags.VISITED);
+            appBuilder.addDependency(db);
         }
 
         collectPlatformProperties();
@@ -245,20 +242,19 @@ public class ApplicationDependencyTreeResolver {
         appBuilder.setPlatformImports(platformReleases);
     }
 
-    private void clearReloadableFlag(ResolvedDependencyBuilder db, Set<ArtifactKey> visited) {
-        final GACTV coords = new GACTV(db.getGroupId(), db.getArtifactId(), db.getClassifier(), db.getType(), db.getVersion());
-        final Set<ArtifactKey> deps = artifactDeps.get(coords);
+    private void clearReloadableFlag(ResolvedDependencyBuilder db) {
+        final Set<ArtifactKey> deps = artifactDeps.get(db.getArtifactCoords());
         if (deps == null || deps.isEmpty()) {
             return;
         }
         for (ArtifactKey key : deps) {
-            final ResolvedDependencyBuilder dep = appDeps.get(key);
-            if (dep == null || !visited.add(key)) {
+            final ResolvedDependencyBuilder dep = appBuilder.getDependency(key);
+            if (dep == null || dep.isFlagSet(DependencyFlags.VISITED)) {
                 continue;
             }
+            dep.setFlags(DependencyFlags.VISITED);
             dep.clearFlag(DependencyFlags.RELOADABLE);
-            clearReloadableFlag(dep, visited);
-            visited.remove(key);
+            clearReloadableFlag(dep);
         }
     }
 
@@ -323,7 +319,7 @@ public class ApplicationDependencyTreeResolver {
     }
 
     private boolean isRuntimeArtifact(ArtifactKey key) {
-        final ResolvedDependencyBuilder dep = appDeps.get(key);
+        final ResolvedDependencyBuilder dep = appBuilder.getDependency(key);
         return dep != null && dep.isFlagSet(DependencyFlags.RUNTIME_CP);
     }
 
@@ -345,7 +341,7 @@ public class ApplicationDependencyTreeResolver {
 
         Artifact artifact = node.getArtifact();
         final ArtifactKey key = getKey(artifact);
-        ResolvedDependencyBuilder dep = appDeps.get(key);
+        ResolvedDependencyBuilder dep = appBuilder.getDependency(key);
         if (dep == null) {
             artifact = resolve(artifact);
         }
@@ -357,7 +353,7 @@ public class ApplicationDependencyTreeResolver {
                 WorkspaceModule module = null;
                 if (resolver.getProjectModuleResolver() != null) {
                     module = resolver.getProjectModuleResolver().getProjectModule(artifact.getGroupId(),
-                            artifact.getArtifactId());
+                            artifact.getArtifactId(), artifact.getVersion());
                 }
                 dep = toAppArtifact(artifact, module)
                         .setRuntimeCp()
@@ -379,7 +375,7 @@ public class ApplicationDependencyTreeResolver {
                         clearWalkingFlag(COLLECT_RELOADABLE_MODULES);
                     }
                 }
-                appDeps.put(key, dep);
+                appBuilder.addDependency(dep);
             }
             clearWalkingFlag(COLLECT_DIRECT_DEPS);
 
@@ -420,7 +416,7 @@ public class ApplicationDependencyTreeResolver {
                     }
                 }
             } else {
-                exclusions = Collections.emptyList();
+                exclusions = List.of();
             }
             return new ExtensionDependency(extInfo, node, exclusions);
         }
@@ -528,7 +524,7 @@ public class ApplicationDependencyTreeResolver {
         for (DependencyNode child : node.getChildren()) {
             clearReloadable(child);
         }
-        final ResolvedDependencyBuilder dep = appDeps.get(getKey(node.getArtifact()));
+        final ResolvedDependencyBuilder dep = appBuilder.getDependency(getKey(node.getArtifact()));
         if (dep != null) {
             dep.clearFlag(DependencyFlags.RELOADABLE);
         }

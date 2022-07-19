@@ -17,7 +17,7 @@ public class ArtifactDependency extends GACTV implements Dependency, Serializabl
 
     public ArtifactDependency(String groupId, String artifactId, String classifier, String type, String version) {
         super(groupId, artifactId, classifier, type, version);
-        this.scope = "compile";
+        this.scope = SCOPE_COMPILE;
         flags = 0;
     }
 
@@ -29,7 +29,7 @@ public class ArtifactDependency extends GACTV implements Dependency, Serializabl
     }
 
     public ArtifactDependency(ArtifactCoords coords, int... flags) {
-        this(coords, "compile", flags);
+        this(coords, SCOPE_COMPILE, flags);
     }
 
     public ArtifactDependency(ArtifactCoords coords, String scope, int... flags) {
@@ -63,16 +63,6 @@ public class ArtifactDependency extends GACTV implements Dependency, Serializabl
     @Override
     public int getFlags() {
         return flags;
-    }
-
-    public void setFlag(int flag) {
-        flags |= flag;
-    }
-
-    public void clearFlag(int flag) {
-        if ((flags & flag) > 0) {
-            flags ^= flag;
-        }
     }
 
     @Override
