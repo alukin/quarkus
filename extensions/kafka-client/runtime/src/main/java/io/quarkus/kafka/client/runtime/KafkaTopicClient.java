@@ -1,5 +1,7 @@
 package io.quarkus.kafka.client.runtime;
 
+import static io.quarkus.kafka.client.runtime.util.ConsumerFactory.createConsumer;
+
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -20,7 +22,6 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.TopicPartitionInfo;
-import org.apache.kafka.common.serialization.BytesDeserializer;
 import org.apache.kafka.common.serialization.BytesSerializer;
 import org.apache.kafka.common.utils.Bytes;
 
@@ -50,23 +51,6 @@ public class KafkaTopicClient {
         Map<String, Object> conf = new HashMap<>(config);
         conf.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, "5000");
         adminClient = AdminClient.create(conf);
-    }
-
-    // We must create a new instance per request, as we might have multiple windows open, each with different pagination, filter and thus different cursor.
-    private Consumer<Bytes, Bytes> createConsumer(String topicName, Integer requestedPartition) {
-        Map<String, Object> config = new HashMap<>(this.config);
-        //TODO: make generic?
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, BytesDeserializer.class);
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, BytesDeserializer.class);
-
-        config.put(ConsumerConfig.CLIENT_ID_CONFIG, "kafka-ui-" + UUID.randomUUID());
-
-        // For pagination, we require manual management of offset pointer.
-        config.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-
-        var consumer = new KafkaConsumer<Bytes, Bytes>(config);
-        consumer.assign(List.of(new TopicPartition(topicName, requestedPartition)));
-        return consumer;
     }
 
     private Producer<Bytes, Bytes> createProducer() {
@@ -180,8 +164,8 @@ public class KafkaTopicClient {
         return newPartitionOffset;
     }
 
-    private long getPosition(String topicName, int partition, Order order) {
-        try (var consumer = createConsumer(topicName, partition)) {
+    long getPosition(String topicName, int partition, Order order) {
+        try (var consumer = createConsumer(topicName, partition, this.config)) {
             var topicPartition = new TopicPartition(topicName, partition);
             if (Order.NEW_FIRST == order) {
                 consumer.seekToEnd(List.of(topicPartition));
@@ -212,7 +196,7 @@ public class KafkaTopicClient {
         for (var requestedPartition : requestedPartitions) {
             List<ConsumerRecord<Bytes, Bytes>> partitionResult = new ArrayList<>();
             var offset = start.get(requestedPartition);
-            try (var consumer = createConsumer(topicName, requestedPartition)) {
+            try (var consumer = createConsumer(topicName, requestedPartition, this.config)) {
                 // Move pointer to currently read position. It might be different per partition, so requesting with offset per partition.
                 var partition = new TopicPartition(topicName, requestedPartition);
 
