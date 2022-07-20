@@ -54,8 +54,9 @@ public class KafkaUiHandler implements Handler<RoutingContext> {
                         res = true;
                         break;
                     case "topicMessages":
-                        var offsetRequest = event.body().asPojo(KafkaMessagesRequest.class);
-                        message = webUtils.toJson(webUtils.getPage(offsetRequest));
+                        var msgRequest = event.body().asPojo(KafkaMessagesRequest.class);
+                        message = webUtils.toJson(webUtils.getMessages(msgRequest));
+                        res = true;
                         break;
                     case "createMessage":
                         var mapper = new JsonMapper();

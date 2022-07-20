@@ -272,10 +272,18 @@ public class KafkaTopicClient {
     }
 
     public List<Integer> partitions(String topicName) throws ExecutionException, InterruptedException {
-        return adminClient.describeTopics(List.of(topicName)).allTopicNames().get().values().stream().reduce((a, b) -> {
-            throw new IllegalStateException("Requested info about single topic, but got result of multiple: " + a + ", " + b);
-        }).orElseThrow(
-                () -> new IllegalStateException("Requested info about a topic, but nothing found. Topic name: " + topicName))
-                .partitions().stream().map(TopicPartitionInfo::partition).collect(Collectors.toList());
+        return adminClient.describeTopics(List.of(topicName))
+                .allTopicNames()
+                .get()
+                .values().stream()
+                .reduce((a, b) -> {
+                    throw new IllegalStateException(
+                            "Requested info about single topic, but got result of multiple: " + a + ", " + b);
+                })
+                .orElseThrow(() -> new IllegalStateException(
+                        "Requested info about a topic, but nothing found. Topic name: " + topicName))
+                .partitions().stream()
+                .map(TopicPartitionInfo::partition)
+                .collect(Collectors.toList());
     }
 }
