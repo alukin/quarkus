@@ -649,8 +649,7 @@ public class KafkaProcessor {
             WebJarResultsBuildItem webJarResultsBuildItem,
             ShutdownContextBuildItem shutdownContext) {
 
-        System.out.println(
-                "====================== registerKafkaUiHandler " + buildConfig.ui.rootPath + " =======================");
+        System.out.println("========== registerKafkaUiHandler " + buildConfig.ui.rootPath + " =====");
 
         WebJarResultsBuildItem.WebJarResult result = webJarResultsBuildItem.byArtifactKey(KAFKA_UI_WEBJAR_ARTIFACT_KEY);
         if (result == null) {
