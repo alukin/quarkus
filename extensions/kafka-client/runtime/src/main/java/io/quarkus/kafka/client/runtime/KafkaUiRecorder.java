@@ -3,8 +3,12 @@ package io.quarkus.kafka.client.runtime;
 import java.util.List;
 import java.util.function.Consumer;
 
+import io.quarkus.arc.Arc;
+import io.quarkus.arc.InstanceHandle;
 import io.quarkus.runtime.ShutdownContext;
 import io.quarkus.runtime.annotations.Recorder;
+import io.quarkus.security.identity.CurrentIdentityAssociation;
+import io.quarkus.vertx.http.runtime.CurrentVertxRequest;
 import io.quarkus.vertx.http.runtime.devmode.FileSystemStaticHandler;
 import io.quarkus.vertx.http.runtime.webjar.WebJarStaticHandler;
 import io.vertx.core.Handler;
@@ -18,7 +22,8 @@ import io.vertx.ext.web.RoutingContext;
 public class KafkaUiRecorder {
 
     public Handler<RoutingContext> kafkaControlHandler() {
-        return new KafkaUiHandler();
+        return new KafkaUiHandler(getCurrentIdentityAssociation(),
+                Arc.container().instance(CurrentVertxRequest.class).get());
     }
 
     public Consumer<Route> routeFunction(Handler<RoutingContext> bodyHandler) {
@@ -36,5 +41,14 @@ public class KafkaUiRecorder {
         WebJarStaticHandler handler = new WebJarStaticHandler(finalDestination, uiPath, webRootConfigurations);
         shutdownContext.addShutdownTask(new ShutdownContext.CloseRunnable(handler));
         return handler;
+    }
+
+    private CurrentIdentityAssociation getCurrentIdentityAssociation() {
+        InstanceHandle<CurrentIdentityAssociation> identityAssociations = Arc.container()
+                .instance(CurrentIdentityAssociation.class);
+        if (identityAssociations.isAvailable()) {
+            return identityAssociations.get();
+        }
+        return null;
     }
 }
