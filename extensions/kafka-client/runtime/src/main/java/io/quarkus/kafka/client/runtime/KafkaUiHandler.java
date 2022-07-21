@@ -14,19 +14,34 @@ import io.quarkus.arc.Arc;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessageCreateRequest;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessagesRequest;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaOffsetRequest;
-import io.vertx.core.Handler;
+import io.quarkus.security.identity.CurrentIdentityAssociation;
+import io.quarkus.vertx.http.runtime.CurrentVertxRequest;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.ext.web.RoutingContext;
 
-public class KafkaUiHandler implements Handler<RoutingContext> {
+public class KafkaUiHandler extends AbstractHttpRequestHandler {
+
+    public KafkaUiHandler(CurrentIdentityAssociation currentIdentityAssociation, CurrentVertxRequest currentVertxRequest) {
+        super(currentIdentityAssociation, currentVertxRequest);
+    }
 
     //This is method that could be copy-patsted to the extension KafkaDevConsoleRecorder.java
+    @Override
     public void handlePost(RoutingContext event) {
-
+        if (event.body() == null) {
+            endResponse(event, BAD_REQUEST, "Request body is null");
+            return;
+        }
         var body = event.body().asJsonObject();
+        if (body == null) {
+            endResponse(event, BAD_REQUEST, "Request JSON body is null");
+            return;
+        }
         String action = body.getString("action");
         String key = body.getString("key");
         String value = body.getString("value");
         String message = "OK";
+        String error = "";
 
         KafkaUiUtils webUtils = kafkaWebUiUtils();
         KafkaAdminClient adminClient = kafkaAdminClient();
@@ -81,17 +96,15 @@ public class KafkaUiHandler implements Handler<RoutingContext> {
                 }
             } catch (InterruptedException ex) {
                 Thread.currentThread().interrupt();
-            } catch (ExecutionException ex) {
-                //  LOGGER.error(ex);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+            } catch (ExecutionException | JsonProcessingException ex) {
+                throw new RuntimeException(ex);
             }
         }
 
         if (res) {
             endResponse(event, OK, message);
         } else {
-            message = "ERROR";
+            message = "ERROR: " + error;
             endResponse(event, BAD_REQUEST, message);
         }
     }
@@ -110,16 +123,16 @@ public class KafkaUiHandler implements Handler<RoutingContext> {
     }
 
     @Override
-    public void handle(RoutingContext event) {
-        try {
-            if (event.body() != null) {
-                handlePost(event);
-            } else {
-                endResponse(event, BAD_REQUEST, "No POST request body to process");
-            }
-        } catch (Exception e) {
-            event.fail(e);
-        }
+    public void handleGet(RoutingContext event) {
+        //TODO: move pure get requests processing here
+        HttpServerRequest request = event.request();
+        String path = request.path();
+        endResponse(event, OK, "GET method is not supported yet. Path is: " + path);
+    }
+
+    @Override
+    public void handleOptions(RoutingContext event) {
+        endResponse(event, OK, "OPTION method is not supported yet");
     }
 
 }
