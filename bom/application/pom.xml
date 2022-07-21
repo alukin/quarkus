@@ -43,7 +43,7 @@
         <smallrye-config.version>2.11.0</smallrye-config.version>
         <smallrye-health.version>3.2.1</smallrye-health.version>
         <smallrye-metrics.version>3.0.5</smallrye-metrics.version>
-        <smallrye-open-api.version>2.1.22</smallrye-open-api.version>
+        <smallrye-open-api.version>2.1.23</smallrye-open-api.version>
         <smallrye-graphql.version>1.6.0</smallrye-graphql.version>
         <smallrye-opentracing.version>2.1.0</smallrye-opentracing.version>
         <smallrye-fault-tolerance.version>5.5.0</smallrye-fault-tolerance.version>
@@ -182,7 +182,7 @@
         <checker-qual.version>3.23.0</checker-qual.version>
         <error-prone-annotations.version>2.14.0</error-prone-annotations.version>
         <jib-core.version>0.21.0</jib-core.version>
-        <google-http-client.version>1.41.8</google-http-client.version>
+        <google-http-client.version>1.42.2</google-http-client.version>
         <scram-client.version>2.1</scram-client.version>
         <picocli.version>4.6.3</picocli.version>
         <google-cloud-functions.version>1.0.4</google-cloud-functions.version>
@@ -192,7 +192,7 @@
         <log4j2-api.version>2.18.0</log4j2-api.version>
         <log4j-jboss-logmanager.version>1.3.0.Final</log4j-jboss-logmanager.version>
         <avro.version>1.11.0</avro.version>
-        <apicurio-registry.version>2.2.4.Final</apicurio-registry.version>
+        <apicurio-registry.version>2.2.5.Final</apicurio-registry.version>
         <apicurio-common-rest-client.version>0.1.11.Final</apicurio-common-rest-client.version> <!-- must be the version Apicurio Registry uses -->
         <jacoco.version>0.8.8</jacoco.version>
         <testcontainers.version>1.17.3</testcontainers.version> <!-- Make sure to also update docker-java.version to match its needs -->
@@ -4863,7 +4863,6 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-            <!-- TODO current infinispan-client is using 6.0.8 and isn't breaking with the following constraints
             <dependency>
                 <groupId>org.hibernate.search</groupId>
                 <artifactId>hibernate-search-engine</artifactId>
@@ -4879,7 +4878,6 @@
                 <artifactId>hibernate-search-util-common</artifactId>
                 <version>${hibernate-search.version}</version>
             </dependency>
-            -->
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
