@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.security.auth.spi.LoginModule;
 
@@ -77,6 +78,7 @@ import io.quarkus.deployment.builditem.AdditionalIndexedClassesBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.ExtensionSslNativeSupportBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.HotDeploymentWatchedFileBuildItem;
 import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.LaunchModeBuildItem;
 import io.quarkus.deployment.builditem.LogCategoryBuildItem;
@@ -176,6 +178,15 @@ public class KafkaProcessor {
     private static final String UI_LINE_FORMAT = UI_LINE_TO_UPDATE + "%s';";
     private static final String LOGO_LINE_TO_UPDATE = "export const logo = '";
     private static final String LOGO_LINE_FORMAT = LOGO_LINE_TO_UPDATE + "%s';";
+    private static final String UI_LOGO_PATH = "/assets/logo.png";
+    // UI brandibg
+    private static final String BRANDING_DIR = "META-INF/branding/";
+    private static final String BRANDING_LOGO_GENERAL = BRANDING_DIR + "logo.png";
+    private static final String BRANDING_LOGO_MODULE = BRANDING_DIR + "quarkus-kafka-client-ui.png";
+    private static final String BRANDING_STYLE_GENERAL = BRANDING_DIR + "style.css";
+    private static final String BRANDING_STYLE_MODULE = BRANDING_DIR + "quarkus-kafka-client-ui.css";
+    private static final String BRANDING_FAVICON_GENERAL = BRANDING_DIR + "favicon.ico";
+    private static final String BRANDING_FAVICON_MODULE = BRANDING_DIR + "quarkus-kafka-client-ui.ico";
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -579,6 +590,7 @@ public class KafkaProcessor {
 
         if (shouldIncludeUi(launchMode, buildConfig)) {
             String handlerPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.ui.handlerRootPath);
+            System.out.println("================ registerKafkaUiExecHandler " + handlerPath + " ===========");
             //setup http request calls handler
             Handler<RoutingContext> executionHandler = recorder.kafkaControlHandler();
             HttpRootPathBuildItem.Builder requestBuilder = httpRootPathBuildItem.routeBuilder()
@@ -592,6 +604,17 @@ public class KafkaProcessor {
     }
 
     @BuildStep
+    List<HotDeploymentWatchedFileBuildItem> uiBrandingFiles() {
+        return Stream.of(BRANDING_LOGO_GENERAL,
+                BRANDING_STYLE_GENERAL,
+                BRANDING_FAVICON_GENERAL,
+                BRANDING_LOGO_MODULE,
+                BRANDING_STYLE_MODULE,
+                BRANDING_FAVICON_MODULE).map(HotDeploymentWatchedFileBuildItem::new)
+                .collect(Collectors.toList());
+    }
+
+    @BuildStep
     void getKafkaUiFinalDestination(
             HttpRootPathBuildItem httpRootPath,
             NonApplicationRootPathBuildItem nonApplicationRootPathBuildItem,
@@ -599,7 +622,8 @@ public class KafkaProcessor {
             KafkaBuildTimeConfig buildConfig,
             BuildProducer<WebJarBuildItem> webJarBuildProducer) {
 
-        System.out.println("================ getKafkaUiFinalDestination " + buildConfig.ui.rootPath + " ===========");
+        System.out.println("================ getKafkaUiFinalDestination " + buildConfig.ui.rootPath + " "
+                + buildConfig.ui.handlerRootPath + " ===========");
 
         if (shouldIncludeUi(launchMode, buildConfig)) {
 
@@ -611,7 +635,7 @@ public class KafkaProcessor {
 
             String devUiPath = nonApplicationRootPathBuildItem.resolvePath("dev");
             String kafkaUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.ui.rootPath);
-            String kafkaHandlerPath = httpRootPath.resolvePath(buildConfig.ui.handlerRootPath);
+            String kafkaHandlerPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.ui.handlerRootPath);
             webJarBuildProducer.produce(
                     WebJarBuildItem.builder().artifactKey(KAFKA_UI_WEBJAR_ARTIFACT_KEY)
                             .root(KAFKA_UI_WEBJAR_STATIC_RESOURCES_PATH)
@@ -627,7 +651,8 @@ public class KafkaProcessor {
                                         content = updateUrl(content, kafkaUiPath,
                                                 UI_LINE_TO_UPDATE,
                                                 UI_LINE_FORMAT);
-                                        content = updateUrl(content, getLogoUrl(launchMode, devUiPath, kafkaUiPath),
+                                        content = updateUrl(content,
+                                                getLogoUrl(launchMode, devUiPath + UI_LOGO_PATH, kafkaUiPath + UI_LOGO_PATH),
                                                 LOGO_LINE_TO_UPDATE,
                                                 LOGO_LINE_FORMAT);
 
