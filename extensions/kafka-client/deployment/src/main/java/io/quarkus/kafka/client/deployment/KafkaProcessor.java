@@ -590,8 +590,6 @@ public class KafkaProcessor {
 
         if (shouldIncludeUi(launchMode, buildConfig)) {
             String handlerPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.ui.handlerRootPath);
-            System.out.println("================ registerKafkaUiExecHandler " + handlerPath + " ===========");
-            //setup http request calls handler
             Handler<RoutingContext> executionHandler = recorder.kafkaControlHandler();
             HttpRootPathBuildItem.Builder requestBuilder = httpRootPathBuildItem.routeBuilder()
                     .routeFunction(handlerPath, recorder.routeFunction(bodyHandlerBuildItem.getHandler()))
@@ -621,9 +619,6 @@ public class KafkaProcessor {
             LaunchModeBuildItem launchMode,
             KafkaBuildTimeConfig buildConfig,
             BuildProducer<WebJarBuildItem> webJarBuildProducer) {
-
-        System.out.println("================ getKafkaUiFinalDestination " + buildConfig.ui.rootPath + " "
-                + buildConfig.ui.handlerRootPath + " ===========");
 
         if (shouldIncludeUi(launchMode, buildConfig)) {
 
@@ -678,15 +673,10 @@ public class KafkaProcessor {
             WebJarResultsBuildItem webJarResultsBuildItem,
             ShutdownContextBuildItem shutdownContext) {
 
-        System.out.println("========== registerKafkaUiHandler " + buildConfig.ui.rootPath + " =====");
-
         WebJarResultsBuildItem.WebJarResult result = webJarResultsBuildItem.byArtifactKey(KAFKA_UI_WEBJAR_ARTIFACT_KEY);
         if (result == null) {
-            System.out.println("========== WebJarResult is null ============");
             return;
         }
-
-        System.out.println("========== WebJarResult is OK ============");
 
         if (shouldIncludeUi(launchMode, buildConfig)) {
             String kafkaUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.ui.rootPath);
@@ -732,8 +722,6 @@ public class KafkaProcessor {
     }
 
     private static boolean shouldIncludeUi(LaunchModeBuildItem launchMode, KafkaBuildTimeConfig config) {
-        System.out.println("************ launch mode: " + launchMode.getLaunchMode());
-        System.out.println("************ ui enabled: " + config.ui.alwaysInclude);
         return launchMode.getLaunchMode().isDevOrTest() || config.ui.alwaysInclude;
     }
 }

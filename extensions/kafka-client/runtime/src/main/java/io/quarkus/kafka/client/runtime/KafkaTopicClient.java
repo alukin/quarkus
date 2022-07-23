@@ -222,7 +222,7 @@ public class KafkaTopicClient {
                     }
                 }
                 // We need to cut off result, if it was reset to 0, as we don't want see entries from old pages.
-                if (Order.NEW_FIRST == order && seekedOffset == 0) {
+                if (Order.NEW_FIRST == order && seekedOffset == 0 && !partitionResult.isEmpty()) {
                     partitionResult.sort(Comparator.comparing(ConsumerRecord::timestamp));
                     partitionResult = partitionResult.subList(0, offset.intValue());
                 }
