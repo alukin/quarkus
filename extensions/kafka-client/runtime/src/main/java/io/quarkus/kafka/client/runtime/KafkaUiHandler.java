@@ -59,14 +59,14 @@ public class KafkaUiHandler extends AbstractHttpRequestHandler {
                     case "getAclInfo":
                         message = webUtils.toJson(webUtils.getAclInfo());
                         res = true;
-                        break;                        
+                        break;
                     case "createTopic":
                         res = adminClient.createTopic(key);
                         message = webUtils.toJson(webUtils.getTopics());
                         break;
                     case "deleteTopic":
                         res = adminClient.deleteTopic(key);
-//                        message = webUtils.toJson(webUtils.getTopics());
+                        //                        message = webUtils.toJson(webUtils.getTopics());
                         message = "{}";
                         res = true;
                         break;
