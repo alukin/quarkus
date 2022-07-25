@@ -13,6 +13,10 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.apache.kafka.clients.admin.*;
+import org.apache.kafka.common.acl.AccessControlEntryFilter;
+import org.apache.kafka.common.acl.AclBinding;
+import org.apache.kafka.common.acl.AclBindingFilter;
+import org.apache.kafka.common.resource.ResourcePatternFilter;
 import org.jboss.logging.Logger;
 
 import io.smallrye.common.annotation.Identifier;
@@ -82,5 +86,12 @@ public class KafkaAdminClient {
 
     public ListConsumerGroupOffsetsResult listConsumerGroupOffsets(String groupId) {
         return getAdminClient().listConsumerGroupOffsets(groupId);
+    }
+
+    public Collection<AclBinding> getAclInfo() throws InterruptedException, ExecutionException {
+        AclBindingFilter filter = new AclBindingFilter(ResourcePatternFilter.ANY, AccessControlEntryFilter.ANY);
+        var options = new DescribeAclsOptions().timeoutMs(1_000);
+        Collection<AclBinding> aclBindings = getAdminClient().describeAcls(filter, options).values().get();
+        return aclBindings;
     }
 }
