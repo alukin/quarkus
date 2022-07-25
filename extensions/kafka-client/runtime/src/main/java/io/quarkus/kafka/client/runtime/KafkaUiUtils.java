@@ -15,6 +15,7 @@ import org.apache.kafka.clients.admin.TopicListing;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.acl.AclBinding;
 import org.apache.kafka.common.acl.AclOperation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -203,5 +204,27 @@ public class KafkaUiUtils {
         return kafkaTopicClient.getPage(request.getTopicName(), request.getOrder(), request.getPageSize(),
                 request.getPageNumber(),
                 request.getPartitions());
+    }
+
+    public KafkaAclInfo getAclInfo() throws InterruptedException, ExecutionException {
+        KafkaAclInfo info = new KafkaAclInfo();
+        KafkaClusterInfo ki = clusterInfo(kafkaAdminClient.getCluster());
+        info.clusterId = ki.id;
+        info.broker = ki.controller.host + ":" + ki.controller.port;
+        info.aclOperations = ki.aclOperations;
+        try {
+            Collection<AclBinding> acls = kafkaAdminClient.getAclInfo();
+            for (AclBinding acl : acls) {
+                KafkaAclEntry e = new KafkaAclEntry();
+                e.operation = acl.entry().operation().name();
+                e.principal = acl.entry().principal();
+                e.perm = acl.entry().permissionType().name();
+                e.pattern = acl.pattern().toString();
+                info.entries.add(e);
+            }
+        } catch (Exception e) {
+            info.aclOperations = e.getMessage();
+        }
+        return info;
     }
 }

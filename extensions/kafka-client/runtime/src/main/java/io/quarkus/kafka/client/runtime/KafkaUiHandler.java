@@ -57,6 +57,10 @@ public class KafkaUiHandler extends AbstractHttpRequestHandler {
                         message = webUtils.toJson(webUtils.getKafkaInfo());
                         res = true;
                         break;
+                    case "getAclInfo":
+                        message = webUtils.toJson(webUtils.getAclInfo());
+                        res = true;
+                        break;                        
                     case "createTopic":
                         var topicCreateRq = event.body().asPojo(KafkaCreateTopicRequest.class);
                         res = adminClient.createTopic(topicCreateRq);
@@ -64,7 +68,9 @@ public class KafkaUiHandler extends AbstractHttpRequestHandler {
                         break;
                     case "deleteTopic":
                         res = adminClient.deleteTopic(key);
-                        message = webUtils.toJson(webUtils.getTopics());
+//                        message = webUtils.toJson(webUtils.getTopics());
+                        message = "{}";
+                        res = true;
                         break;
                     case "getTopics":
                         message = webUtils.toJson(webUtils.getTopics());
@@ -75,9 +81,20 @@ public class KafkaUiHandler extends AbstractHttpRequestHandler {
                         message = webUtils.toJson(webUtils.getMessages(msgRequest));
                         res = true;
                         break;
+                    case "getOffset":
+                        var request = event.body().asPojo(KafkaOffsetRequest.class);
+                        message = webUtils.toJson(webUtils.getOffset(request));
+                        res = true;
+                        break;
+                    case "getPage":
+                        var msRequest = event.body().asPojo(KafkaMessagesRequest.class);
+                        message = webUtils.toJson(webUtils.getPage(msRequest));
+                        res = true;
+                        break;
+
                     case "createMessage":
                         var mapper = new JsonMapper();
-                        var rq = mapper.readValue(event.body().asString(), KafkaMessageCreateRequest.class);
+                        var rq = mapper.readValue(event.getBodyAsString(), KafkaMessageCreateRequest.class);
                         webUtils.createMessage(rq);
                         message = "{}";
                         res = true;
@@ -85,11 +102,6 @@ public class KafkaUiHandler extends AbstractHttpRequestHandler {
                     case "getPartitions":
                         var topicName = body.getString("topicName");
                         message = webUtils.toJson(webUtils.partitions(topicName));
-                        res = true;
-                        break;
-                    case "getOffset":
-                        var request = event.body().asPojo(KafkaOffsetRequest.class);
-                        message = webUtils.toJson(webUtils.getOffset(request));
                         res = true;
                         break;
                     default:
