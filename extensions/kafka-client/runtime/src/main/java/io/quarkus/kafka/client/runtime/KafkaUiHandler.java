@@ -60,7 +60,7 @@ public class KafkaUiHandler extends AbstractHttpRequestHandler {
                     case "getAclInfo":
                         message = webUtils.toJson(webUtils.getAclInfo());
                         res = true;
-                        break;                        
+                        break;
                     case "createTopic":
                         var topicCreateRq = event.body().asPojo(KafkaCreateTopicRequest.class);
                         res = adminClient.createTopic(topicCreateRq);
@@ -68,7 +68,7 @@ public class KafkaUiHandler extends AbstractHttpRequestHandler {
                         break;
                     case "deleteTopic":
                         res = adminClient.deleteTopic(key);
-//                        message = webUtils.toJson(webUtils.getTopics());
+                        //                        message = webUtils.toJson(webUtils.getTopics());
                         message = "{}";
                         res = true;
                         break;
