@@ -430,7 +430,7 @@ recipeList:
       newValue: 6.0.0-RC4
   - org.openrewrite.maven.ChangePropertyValue:
       key: smallrye-graphql.version
-      newValue: 2.0.0.RC4
+      newValue: 2.0.0.RC6
   - org.openrewrite.maven.ChangePropertyValue:
       key: smallrye-health.version
       newValue: 4.0.0-RC2
@@ -667,7 +667,6 @@ recipeList:
       oldArtifactId: keycloak-admin-client
       newGroupId: org.keycloak
       newArtifactId: keycloak-admin-client-jakarta
-      newVersion: 999-SNAPSHOT
   - org.openrewrite.maven.ChangeDependencyGroupIdAndArtifactId:
       oldGroupId: org.keycloak
       oldArtifactId: keycloak-admin-client
