@@ -175,7 +175,7 @@ public class KafkaProcessor {
     private static final String UI_LINE_FORMAT = UI_LINE_TO_UPDATE + "%s';";
     private static final String LOGO_LINE_TO_UPDATE = "export const logo = '";
     private static final String LOGO_LINE_FORMAT = LOGO_LINE_TO_UPDATE + "%s';";
-    private static final String UI_LOGO_PATH = "/assets/logo.png";
+    private static final String UI_LOGO_PATH = "logo.png";
     // UI brandibg
     private static final String BRANDING_DIR = "META-INF/branding/";
     private static final String BRANDING_LOGO_GENERAL = BRANDING_DIR + "logo.png";
@@ -677,7 +677,7 @@ public class KafkaProcessor {
         if (shouldIncludeUi(launchMode, buildConfig)) {
             String kafkaUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.ui.rootPath);
             String finalDestination = result.getFinalDestination();
-            System.out.println("========== WebJar paths: " + kafkaUiPath + ", " + finalDestination);
+
             Handler<RoutingContext> handler = recorder.uiHandler(finalDestination,
                     kafkaUiPath, result.getWebRootConfigurations(), shutdownContext);
             routeProducer.produce(nonApplicationRootPathBuildItem.routeBuilder()
