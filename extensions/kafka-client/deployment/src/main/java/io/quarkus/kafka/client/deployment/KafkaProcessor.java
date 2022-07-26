@@ -647,7 +647,8 @@ public class KafkaProcessor {
                                                 UI_LINE_TO_UPDATE,
                                                 UI_LINE_FORMAT);
                                         content = updateUrl(content,
-                                                getLogoUrl(launchMode, devUiPath + UI_LOGO_PATH, kafkaUiPath + UI_LOGO_PATH),
+                                                getLogoUrl(launchMode, kafkaUiPath + "/" + UI_LOGO_PATH,
+                                                        kafkaUiPath + "/" + UI_LOGO_PATH),
                                                 LOGO_LINE_TO_UPDATE,
                                                 LOGO_LINE_FORMAT);
 
