@@ -24,11 +24,6 @@ public class KafkaHealthCheck implements HealthCheck {
 
     @Override
     public HealthCheckResponse call() {
-        if (kafkaAdminClient == null) {
-            System.err.println("========== inject does not work =====");
-        } else {
-            System.err.println("========== inject works =====");
-        }
         HealthCheckResponseBuilder builder = HealthCheckResponse.named("Kafka connection health check").up();
         try {
             StringBuilder nodes = new StringBuilder();
@@ -42,7 +37,7 @@ public class KafkaHealthCheck implements HealthCheck {
         } catch (ExecutionException ex) {
             return builder.down().withData("reason", ex.getMessage()).build();
         } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt(); 
+            Thread.currentThread().interrupt();
             return builder.down().withData("reason", ex.getMessage()).build();
         }
     }
