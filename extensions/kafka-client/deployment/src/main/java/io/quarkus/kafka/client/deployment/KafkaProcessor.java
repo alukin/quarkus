@@ -536,7 +536,6 @@ public class KafkaProcessor {
 
     // Kafka UI related stuff
 
-    //TODO: make configurable
     @BuildStep
     public AdditionalBeanBuildItem kafkaAdminClient() {
         return AdditionalBeanBuildItem.builder()
@@ -545,7 +544,6 @@ public class KafkaProcessor {
                 .build();
     }
 
-    //TODO: make configurable
     @BuildStep
     public AdditionalBeanBuildItem kafkaTopicClient() {
         return AdditionalBeanBuildItem.builder()
@@ -554,7 +552,6 @@ public class KafkaProcessor {
                 .build();
     }
 
-    //TODO: make configurable
     @BuildStep
     public AdditionalBeanBuildItem kafkaWebUiUtils() {
         return AdditionalBeanBuildItem.builder()
