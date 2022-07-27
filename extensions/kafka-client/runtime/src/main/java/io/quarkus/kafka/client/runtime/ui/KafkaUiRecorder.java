@@ -1,4 +1,4 @@
-package io.quarkus.kafka.client.runtime;
+package io.quarkus.kafka.client.runtime.ui;
 
 import java.util.List;
 import java.util.function.Consumer;

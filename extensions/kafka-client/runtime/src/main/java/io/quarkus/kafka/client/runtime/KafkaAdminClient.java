@@ -1,9 +1,6 @@
 package io.quarkus.kafka.client.runtime;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -19,6 +16,7 @@ import org.apache.kafka.common.acl.AclBindingFilter;
 import org.apache.kafka.common.resource.ResourcePatternFilter;
 import org.jboss.logging.Logger;
 
+import io.quarkus.kafka.client.runtime.ui.model.request.KafkaCreateTopicRequest;
 import io.smallrye.common.annotation.Identifier;
 
 @Singleton
@@ -73,15 +71,13 @@ public class KafkaAdminClient {
         return dtr.topicNameValues() != null;
     }
 
-    public boolean createTopic(String name) {
-        LOGGER.debug("Creating kafka topic: " + name);
-        ArrayList<NewTopic> newTopics = new ArrayList<>();
-        NewTopic nt = new NewTopic(name, 1, (short) 1);
-        newTopics.add(nt);
-        CreateTopicsResult ctr = client.createTopics(newTopics);
-        boolean res = true;
-        res = ctr.values() != null;
-        return res;
+    public boolean createTopic(KafkaCreateTopicRequest kafkaCreateTopicRq) {
+        var partitions = Optional.ofNullable(kafkaCreateTopicRq.getPartitions()).orElse(1);
+        var replications = Optional.ofNullable(kafkaCreateTopicRq.getReplications()).orElse((short) 1);
+        var newTopic = new NewTopic(kafkaCreateTopicRq.getTopicName(), partitions, replications);
+
+        CreateTopicsResult ctr = client.createTopics(List.of(newTopic));
+        return ctr.values() != null;
     }
 
     public ListConsumerGroupOffsetsResult listConsumerGroupOffsets(String groupId) {

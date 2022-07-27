@@ -1,4 +1,4 @@
-package io.quarkus.kafka.client.runtime;
+package io.quarkus.kafka.client.runtime.ui;
 
 import io.quarkus.arc.Arc;
 import io.quarkus.arc.ManagedContext;

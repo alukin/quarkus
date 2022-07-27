@@ -62,6 +62,7 @@ import org.jboss.jandex.DotName;
 import org.xerial.snappy.OSInfo;
 
 import io.quarkus.arc.deployment.AdditionalBeanBuildItem;
+import io.quarkus.arc.deployment.BeanContainerBuildItem;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
 import io.quarkus.bootstrap.classloading.QuarkusClassLoader;
 import io.quarkus.deployment.Capabilities;
@@ -95,6 +96,9 @@ import io.quarkus.deployment.pkg.NativeConfig;
 import io.quarkus.kafka.client.runtime.*;
 import io.quarkus.kafka.client.runtime.KafkaRuntimeConfigProducer;
 import io.quarkus.kafka.client.runtime.converter.KafkaModelConverter;
+import io.quarkus.kafka.client.runtime.ui.KafkaTopicClient;
+import io.quarkus.kafka.client.runtime.ui.KafkaUiRecorder;
+import io.quarkus.kafka.client.runtime.ui.KafkaUiUtils;
 import io.quarkus.kafka.client.serialization.BufferDeserializer;
 import io.quarkus.kafka.client.serialization.BufferSerializer;
 import io.quarkus.kafka.client.serialization.JsonArrayDeserializer;
@@ -109,6 +113,8 @@ import io.quarkus.maven.dependency.GACT;
 import io.quarkus.runtime.LaunchMode;
 import io.quarkus.runtime.configuration.ConfigurationException;
 import io.quarkus.smallrye.health.deployment.spi.HealthBuildItem;
+import io.quarkus.vertx.http.deployment.BodyHandlerBuildItem;
+import io.quarkus.vertx.http.deployment.HttpRootPathBuildItem;
 import io.quarkus.vertx.http.deployment.NonApplicationRootPathBuildItem;
 import io.quarkus.vertx.http.deployment.RouteBuildItem;
 import io.quarkus.vertx.http.deployment.WebsocketSubProtocolsBuildItem;
@@ -557,6 +563,7 @@ public class KafkaProcessor {
                 .build();
     }
 
+    @Record(ExecutionTime.RUNTIME_INIT)
     @BuildStep
     @Consume(BeanContainerBuildItem.class)
     void buildExecutionEndpoint(
