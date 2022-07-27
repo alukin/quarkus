@@ -1,9 +1,9 @@
-package io.quarkus.kafka.client.runtime.devui.model.request;
+package io.quarkus.kafka.client.runtime.ui.model.request;
 
 import java.util.List;
 import java.util.Map;
 
-import io.quarkus.kafka.client.runtime.devui.model.Order;
+import io.quarkus.kafka.client.runtime.ui.model.Order;
 
 public class KafkaMessagesRequest {
     private String topicName;

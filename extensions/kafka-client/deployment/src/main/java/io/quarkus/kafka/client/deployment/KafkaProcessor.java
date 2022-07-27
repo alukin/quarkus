@@ -508,16 +508,31 @@ public class KafkaProcessor {
     @BuildStep
     public AdditionalBeanBuildItem kafkaWebUiUtils() {
         return AdditionalBeanBuildItem.builder()
-                .addBeanClass(KafkaDevUiUtils.class)
+                .addBeanClass(KafkaUiUtils.class)
                 .setUnremovable()
                 .build();
+    }
+
+    @BuildStep
+    @Consume(BeanContainerBuildItem.class)
+    void buildExecutionEndpoint(
+            BuildProducer<RouteBuildItem> routeProducer,
+            HttpRootPathBuildItem httpRootPathBuildItem,
+            KafkaUiRecorder recorder,
+            ShutdownContextBuildItem shutdownContext,
+            LaunchModeBuildItem launchMode,
+            BodyHandlerBuildItem bodyHandlerBuildItem,
+            KafkaBuildTimeConfig buildConfig,
+            BeanContainerBuildItem beanContainer,
+            BuildProducer<WebsocketSubProtocolsBuildItem> webSocketSubProtocols) {
+
     }
 
     @BuildStep
     @Record(ExecutionTime.RUNTIME_INIT)
     public void registerKafkaUiHandler(
             // BuildProducer<RouteBuildItem> routeProducer,
-            KafkaDevUIRecorder recorder,
+            KafkaUiRecorder recorder,
             //            Map<String, Object> runtimeConfig,
             LaunchModeBuildItem launchMode,
             NonApplicationRootPathBuildItem nonApplicationRootPathBuildItem,

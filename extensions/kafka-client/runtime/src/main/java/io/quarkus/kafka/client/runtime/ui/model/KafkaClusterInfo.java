@@ -1,4 +1,4 @@
-package io.quarkus.kafka.client.runtime.devui.model;
+package io.quarkus.kafka.client.runtime.ui.model;
 
 import java.util.ArrayList;
 import java.util.List;

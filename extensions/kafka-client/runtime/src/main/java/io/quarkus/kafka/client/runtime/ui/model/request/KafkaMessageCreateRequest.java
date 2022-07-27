@@ -1,4 +1,4 @@
-package io.quarkus.kafka.client.runtime.devui.model.request;
+package io.quarkus.kafka.client.runtime.ui.model.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

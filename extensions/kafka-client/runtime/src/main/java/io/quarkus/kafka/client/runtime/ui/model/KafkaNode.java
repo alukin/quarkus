@@ -1,4 +1,4 @@
-package io.quarkus.kafka.client.runtime.devui.model;
+package io.quarkus.kafka.client.runtime.ui.model;
 
 public class KafkaNode {
     public String host;

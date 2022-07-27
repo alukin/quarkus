@@ -16,13 +16,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.quarkus.kafka.client.runtime.converter.KafkaModelConverter;
-import io.quarkus.kafka.client.runtime.devui.model.*;
-import io.quarkus.kafka.client.runtime.devui.model.request.KafkaMessageCreateRequest;
-import io.quarkus.kafka.client.runtime.devui.model.request.KafkaMessagesRequest;
-import io.quarkus.kafka.client.runtime.devui.model.request.KafkaOffsetRequest;
+import io.quarkus.kafka.client.runtime.ui.model.KafkaClusterInfo;
+import io.quarkus.kafka.client.runtime.ui.model.KafkaConsumerGroup;
+import io.quarkus.kafka.client.runtime.ui.model.KafkaInfo;
+import io.quarkus.kafka.client.runtime.ui.model.KafkaMessagePage;
+import io.quarkus.kafka.client.runtime.ui.model.KafkaNode;
+import io.quarkus.kafka.client.runtime.ui.model.KafkaTopic;
+import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessageCreateRequest;
+import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessagesRequest;
+import io.quarkus.kafka.client.runtime.ui.model.request.KafkaOffsetRequest;
 
 @Singleton
-public class KafkaDevUiUtils {
+public class KafkaUiUtils {
 
     private final KafkaAdminClient kafkaAdminClient;
 
@@ -31,7 +36,7 @@ public class KafkaDevUiUtils {
 
     private final KafkaModelConverter modelConverter;
 
-    public KafkaDevUiUtils(KafkaAdminClient kafkaAdminClient, KafkaTopicClient kafkaTopicClient, ObjectMapper objectMapper,
+    public KafkaUiUtils(KafkaAdminClient kafkaAdminClient, KafkaTopicClient kafkaTopicClient, ObjectMapper objectMapper,
             KafkaModelConverter modelConverter) {
         this.kafkaAdminClient = kafkaAdminClient;
         this.kafkaTopicClient = kafkaTopicClient;
