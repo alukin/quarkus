@@ -86,12 +86,7 @@ import io.quarkus.kafka.client.runtime.KafkaAdminClient;
 import io.quarkus.kafka.client.runtime.KafkaBindingConverter;
 import io.quarkus.kafka.client.runtime.KafkaRecorder;
 import io.quarkus.kafka.client.runtime.KafkaRuntimeConfigProducer;
-import io.quarkus.kafka.client.serialization.BufferDeserializer;
-import io.quarkus.kafka.client.serialization.BufferSerializer;
-import io.quarkus.kafka.client.serialization.JsonArrayDeserializer;
-import io.quarkus.kafka.client.serialization.JsonArraySerializer;
-import io.quarkus.kafka.client.serialization.JsonObjectDeserializer;
-import io.quarkus.kafka.client.serialization.JsonObjectSerializer;
+import io.quarkus.kafka.client.runtime.KafkaWebUiUtils;
 import io.quarkus.kafka.client.serialization.JsonbDeserializer;
 import io.quarkus.kafka.client.serialization.JsonbSerializer;
 import io.quarkus.kafka.client.serialization.ObjectMapperDeserializer;
@@ -403,6 +398,15 @@ public class KafkaProcessor {
     public AdditionalBeanBuildItem kafkaAdminClient() {
         return AdditionalBeanBuildItem.builder()
                 .addBeanClass(KafkaAdminClient.class)
+                .setUnremovable()
+                .build();
+    }
+
+    //TODO: make configurable
+    @BuildStep
+    public AdditionalBeanBuildItem kafkaWebUiUtils() {
+        return AdditionalBeanBuildItem.builder()
+                .addBeanClass(KafkaWebUiUtils.class)
                 .setUnremovable()
                 .build();
     }
