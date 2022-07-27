@@ -29,6 +29,7 @@ import io.quarkus.kafka.client.runtime.converter.KafkaModelConverter;
 import io.quarkus.kafka.client.runtime.ui.model.KafkaMessagePage;
 import io.quarkus.kafka.client.runtime.ui.model.Order;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessageCreateRequest;
+import io.quarkus.kafka.client.runtime.ui.model.response.KafkaMessagePage;
 import io.smallrye.common.annotation.Identifier;
 
 @Singleton
