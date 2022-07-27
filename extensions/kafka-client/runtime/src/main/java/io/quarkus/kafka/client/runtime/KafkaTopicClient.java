@@ -170,19 +170,4 @@ public class KafkaTopicClient {
                 .map(TopicPartitionInfo::partition)
                 .collect(Collectors.toList());
     }
-
-    public void createMessage(KafkaMessageCreateRequest request) {
-        var record = new ProducerRecord<>(
-                request.getTopic(),
-                request.getPartition(),
-                Bytes.wrap(request.getKey().getBytes()),
-                Bytes.wrap(request.getValue().getBytes())//,
-                //TODO: support headers
-                //request.getHeaders
-                );
-
-        try (var consumer = createProducer()) {
-            consumer.send(record);
-        }
-    }
 }
