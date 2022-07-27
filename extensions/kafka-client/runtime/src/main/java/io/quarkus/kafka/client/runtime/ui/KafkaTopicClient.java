@@ -25,7 +25,7 @@ import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.serialization.BytesSerializer;
 import org.apache.kafka.common.utils.Bytes;
 
-import io.quarkus.kafka.client.runtime.ui.model.KafkaMessagePage;
+import io.quarkus.kafka.client.runtime.ui.model.response.KafkaMessagePage;
 import io.quarkus.kafka.client.runtime.ui.model.Order;
 import io.quarkus.kafka.client.runtime.ui.model.converter.KafkaModelConverter;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessageCreateRequest;

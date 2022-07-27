@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.utils.Bytes;
 
-import io.quarkus.kafka.client.runtime.ui.model.KafkaMessage;
+import io.quarkus.kafka.client.runtime.ui.model.response.KafkaMessage;
 
 public class KafkaModelConverter {
     public KafkaMessage convert(ConsumerRecord<Bytes, Bytes> message) {
