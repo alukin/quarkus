@@ -22,7 +22,7 @@ public class KafkaBuildTimeUiConfig {
      * Always include the UI. By default, this will only be included in dev and test.
      * Setting this to true will also include the UI in Prod
      */
-    @ConfigItem(defaultValue = "true")
+    @ConfigItem(defaultValue = "false")
     public boolean alwaysInclude;
 
 }

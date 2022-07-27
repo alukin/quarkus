@@ -34,34 +34,24 @@
             <artifactId>jquery</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>bootstrap-multiselect</artifactId>
+            <version>${bootstrap-mutiliselect.version}</version>           
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>json-rpc-2.0</artifactId>
+            <version>${json-rpc.version}</version>          
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>codemirror</artifactId>
+            <scope>provided</scope>
+        </dependency>      
     </dependencies>
     
-    <build>            
-        <!-- Copy all web content files META-INF folder, and push it though a filter to replace maven properties -->
-        <!-- the defintion below causes problems with path in test modules that use quarkus-maven-plugin code generation -->
-        <!--  e.g. project project reactive-messaging-hibernate-reactive -->
-        <!--        <resources>
-            <resource>
-                <directory>${basedir}/src/main/resources</directory>
-            </resource>
-            <resource>
-                <directory>${basedir}/src/main/webapp</directory>
-                <targetPath>${project.build.directory}/classes/META-INF/resources/${path.kafkaui}</targetPath>
-                <filtering>true</filtering>
-                <includes>
-                    <include>**/*.html</include>
-                </includes>
-            </resource>
-            <resource>
-                <directory>${basedir}/src/main/webapp</directory>
-                <targetPath>${project.build.directory}/classes/META-INF/resources/${path.kafkaui}</targetPath>
-                <filtering>false</filtering>
-                <excludes>
-                    <exclude>**/*.html</exclude>
-                </excludes>
-            </resource>
-        </resources>-->
-        
+    <build>                   
         <plugins>
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
@@ -199,7 +189,19 @@
                                     <fileMappers>
                                         <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper/>
                                     </fileMappers>                                                                        
-                                </artifactItem>        
+                                </artifactItem> 
+                                <artifactItem>
+                                    <groupId>org.webjars</groupId>
+                                    <artifactId>codemirror</artifactId>
+                                    <version>${webjar.codemirror.version}</version>
+                                    <type>jar</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/classes/META-INF/resources/${path.kafkaui}/codemirror/</outputDirectory>
+                                    <includes>**/lib/**.js, **/lib/**.css</includes>
+                                    <fileMappers>
+                                        <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper/>
+                                    </fileMappers>                                         
+                                </artifactItem>                                         
                             </artifactItems>
                         </configuration>
                     </execution>
