@@ -13,7 +13,7 @@ The Kafka UI allows you to
 * view Kafka cluster info
 
 
-The Kafka UI has following configuration properties in `aplication.properties` file oth the application.
+The Kafka UI has following configuration properties in `aplication.properties` file of the application.
 
 * `quarkus.kafka.ui.always-include` Boolean, includes Kafka UI in the application if `true`
 * `quarkus.kafka.ui.root-path` String, path to the Kafka UI, default is `/q/kafka-ui`
