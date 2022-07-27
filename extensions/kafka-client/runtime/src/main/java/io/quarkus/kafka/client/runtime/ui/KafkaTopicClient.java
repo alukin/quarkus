@@ -55,7 +55,7 @@ public class KafkaTopicClient {
     private Producer<Bytes, Bytes> createProducer() {
         Map<String, Object> config = new HashMap<>(this.config);
 
-        config.put(ProducerConfig.CLIENT_ID_CONFIG, "KafkaExampleProducer");
+        config.put(ProducerConfig.CLIENT_ID_CONFIG, "kafka-ui-producer-" + UUID.randomUUID());
         // TODO: make generic to support AVRO serializer
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, BytesSerializer.class.getName());
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, BytesSerializer.class.getName());
@@ -64,30 +64,30 @@ public class KafkaTopicClient {
     }
 
     /**
-     * Reads the messages from particular topic.
+     * Reads the messages from particular topic. Offset for next page is returned within response.
+     * The first/last page offset could be retrieved with {@link KafkaTopicClient#getPagePartitionOffset(String, List, Order)} method.
      *
      * @param topicName        topic to read messages from
      * @param order            ascending or descending. Defaults to descending (newest first)
-     * @param partitionOffsets read offset position per requested partition
+     * @param partitionOffsets the offset for page to be read
+     * @param pageSize         size of read page
      * @return page of messages, matching requested filters
      */
-    private KafkaMessagePage getTopicMessages(
+    public KafkaMessagePage getTopicMessages(
             String topicName,
             Order order,
             Map<Integer, Long> partitionOffsets,
-            int pageSize,
-            int pagesCount)
+            int pageSize)
             throws ExecutionException, InterruptedException {
-        //assertParamsValid(pageSize, pagesCount, partitionOffsets);
+        assertParamsValid(pageSize, partitionOffsets);
+
         var requestedPartitions = partitionOffsets.keySet();
         assertRequestedPartitionsExist(topicName, requestedPartitions);
         if (order == null)
             order = Order.OLD_FIRST;
 
-        //FIXME: last page requesting
-        int totalMessages = pageSize * pagesCount;
-        var allPartitionsResult = getConsumerRecords(topicName, order, pageSize, requestedPartitions, partitionOffsets,
-                pageSize);
+        var allPartitionsResult =
+                getConsumerRecords(topicName, order, pageSize, requestedPartitions, partitionOffsets, pageSize);
 
         Comparator<ConsumerRecord<Bytes, Bytes>> comparator = Comparator.comparing(ConsumerRecord::timestamp);
         if (Order.NEW_FIRST == order)
@@ -95,8 +95,8 @@ public class KafkaTopicClient {
         allPartitionsResult.sort(comparator);
 
         // We might have too many values. Throw away newer items, which don't fit into page.
-        if (allPartitionsResult.size() > totalMessages) {
-            allPartitionsResult = allPartitionsResult.subList(0, totalMessages);
+        if (allPartitionsResult.size() > pageSize) {
+            allPartitionsResult = allPartitionsResult.subList(0, pageSize);
         }
 
         var newOffsets = calculateNewPartitionOffset(partitionOffsets, allPartitionsResult, order, topicName);
@@ -106,41 +106,28 @@ public class KafkaTopicClient {
         return new KafkaMessagePage(newOffsets, convertedResult);
     }
 
-    // Method to fail fast on wrong params, even before querying Kafka.
-    private void assertParamsValid(int pageSize, int pagesCount, List<Integer> requestedPartitions,
-                                   Map<Integer, Long> partitionOffsets) {
+    // Fail fast on wrong params, even before querying Kafka.
+    private void assertParamsValid(int pageSize, Map<Integer, Long> partitionOffsets) {
         if (pageSize <= 0)
             throw new IllegalArgumentException("Page size must be > 0.");
-        if (pagesCount <= 0)
-            throw new IllegalArgumentException("Pages count must be > 0.");
-        if ((partitionOffsets == null || partitionOffsets.isEmpty()) ||
-                (requestedPartitions == null || requestedPartitions.isEmpty()))
-            throw new IllegalArgumentException("Either partition map or partition list must be defined.");
+
+        if (partitionOffsets == null || partitionOffsets.isEmpty())
+            throw new IllegalArgumentException("Partition offset map must be specified.");
 
         for (var partitionOffset : partitionOffsets.entrySet()) {
             if (partitionOffset.getValue() < 0)
                 throw new IllegalArgumentException(
                         "Partition offset must be > 0.");
         }
-
-    }
-
-    public KafkaMessagePage getTopicMessages(String topicName, Order order, Map<Integer, Long> partitionOffsets, int pageSize)
-            throws ExecutionException, InterruptedException {
-        return getTopicMessages(topicName, order, partitionOffsets, pageSize, 1);
-    }
-
-    public KafkaMessagePage getPage(String topicName, Order order, int pageSize, int pageNumber,
-                                    List<Integer> requestedPartitions) throws ExecutionException, InterruptedException {
-        var start = getPagePartitionOffset(topicName, requestedPartitions, order);
-        return getTopicMessages(topicName, order, start, pageSize, pageNumber);
     }
 
     private ConsumerRecords<Bytes, Bytes> pollWhenReady(Consumer<Bytes, Bytes> consumer) {
         var attempts = 0;
-        ConsumerRecords<Bytes, Bytes> result = consumer.poll(Duration.of(100, ChronoUnit.MILLIS));
+        var pullDuration = Duration.of(100, ChronoUnit.MILLIS);
+        var result = consumer.poll(pullDuration);
+
         while (result.isEmpty() && attempts < RETRIES) {
-            result = consumer.poll(Duration.of(100, ChronoUnit.MILLIS));
+            result = consumer.poll(pullDuration);
             attempts++;
         }
         return result;
@@ -163,7 +150,7 @@ public class KafkaTopicClient {
         return newPartitionOffset;
     }
 
-    long getPosition(String topicName, int partition, Order order) {
+    private long getPosition(String topicName, int partition, Order order) {
         try (var consumer = createConsumer(topicName, partition, this.config)) {
             var topicPartition = new TopicPartition(topicName, partition);
             if (Order.NEW_FIRST == order) {
@@ -191,6 +178,7 @@ public class KafkaTopicClient {
     private List<ConsumerRecord<Bytes, Bytes>> getConsumerRecords(String topicName, Order order, int pageSize,
                                                                   Collection<Integer> requestedPartitions, Map<Integer, Long> start, int totalMessages) {
         List<ConsumerRecord<Bytes, Bytes>> allPartitionsResult = new ArrayList<>();
+
         // Requesting a full page from each partition and then filtering out redundant data. Thus, we'll ensure, we read data in historical order.
         for (var requestedPartition : requestedPartitions) {
             List<ConsumerRecord<Bytes, Bytes>> partitionResult = new ArrayList<>();
@@ -221,7 +209,7 @@ public class KafkaTopicClient {
                     }
                 }
                 // We need to cut off result, if it was reset to 0, as we don't want see entries from old pages.
-                if (Order.NEW_FIRST == order && seekedOffset == 0 && !partitionResult.isEmpty()) {
+                if (Order.NEW_FIRST == order && seekedOffset == 0 && partitionResult.size() > offset.intValue()) {
                     partitionResult.sort(Comparator.comparing(ConsumerRecord::timestamp));
                     partitionResult = partitionResult.subList(0, offset.intValue());
                 }
@@ -249,8 +237,8 @@ public class KafkaTopicClient {
                 //TODO: support headers
         );
 
-        try (var consumer = createProducer()) {
-            consumer.send(record);
+        try (var producer = createProducer()) {
+            producer.send(record);
         }
     }
 

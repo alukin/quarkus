@@ -203,21 +203,6 @@ export default class MessagesPage {
         });
     }
 
-    requestPage(requestedPage, onPageLoaded, onPageLoadFailed) {
-        const topicName = currentContext.topicName;
-        const partitions = this.getPartitions();
-        const req = {
-            action: "getPage",
-            topicName: topicName,
-            order: this.getOrder(),
-            partitions: partitions,
-            pageSize: PAGE_SIZE,
-            pageNumber: requestedPage
-        };
-
-        doPost(req, onPageLoaded, onPageLoadFailed);
-    }
-
     onMessagesLoaded(data) {
         const key = this.generateCacheKey(currentContext.currentPage + 1);
         currentContext.pagesCache.set(key, data.partitionOffset);

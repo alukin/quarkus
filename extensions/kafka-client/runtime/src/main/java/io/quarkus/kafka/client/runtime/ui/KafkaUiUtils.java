@@ -202,12 +202,6 @@ public class KafkaUiUtils {
                 request.getPageSize());
     }
 
-    public KafkaMessagePage getPage(KafkaMessagesRequest request) throws ExecutionException, InterruptedException {
-        return kafkaTopicClient.getPage(request.getTopicName(), request.getOrder(), request.getPageSize(),
-                request.getPageNumber(),
-                request.getPartitions());
-    }
-
     public KafkaAclInfo getAclInfo() throws InterruptedException, ExecutionException {
         KafkaAclInfo info = new KafkaAclInfo();
         KafkaClusterInfo ki = clusterInfo(kafkaAdminClient.getCluster());

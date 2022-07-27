@@ -8,7 +8,6 @@ import io.quarkus.kafka.client.runtime.ui.model.Order;
 public class KafkaMessagesRequest {
     private String topicName;
     private Order order;
-    private List<Integer> partitions;
     private int pageSize;
     private Integer pageNumber;
 
@@ -17,10 +16,9 @@ public class KafkaMessagesRequest {
     public KafkaMessagesRequest() {
     }
 
-    public KafkaMessagesRequest(String topicName, Order order, List<Integer> partitions, int pageSize, int pageNumber) {
+    public KafkaMessagesRequest(String topicName, Order order, int pageSize, int pageNumber) {
         this.topicName = topicName;
         this.order = order;
-        this.partitions = partitions;
         this.pageSize = pageSize;
         this.pageNumber = pageNumber;
     }
@@ -38,10 +36,6 @@ public class KafkaMessagesRequest {
 
     public Order getOrder() {
         return order;
-    }
-
-    public List<Integer> getPartitions() {
-        return partitions;
     }
 
     public int getPageSize() {

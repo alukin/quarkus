@@ -47,8 +47,7 @@ public class KafkaAdminClient {
     }
 
     public DescribeClusterResult getCluster() throws ExecutionException, InterruptedException {
-        DescribeClusterResult dcr = client.describeCluster();
-        return dcr;
+        return client.describeCluster();
     }
 
     public Collection<TopicListing> getTopics() throws InterruptedException, ExecutionException {
