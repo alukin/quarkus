@@ -1,0 +1,22 @@
+= Kafka UI
+
+This module adds Kafka UI to the Quarkus development UI and allows you to add Kafka UI to your project also. 
+By default, the UI is at the path `/q/kafka-ui`.
+The UI is always available in the development mode if `quarkus-kafka-client` extension is used. 
+
+The Kafka UI allows you to 
+
+* view, create and delete topics
+* view and create topic messages
+* view consumer groups
+* view access control lists
+* view Kafka cluster info
+
+
+The Kafka UI has following configuration properties in `aplication.properties` file oth the application.
+
+* `quarkus.kafka.ui.always-include` Boolean, includes Kafka UI in the application if `true`
+* `quarkus.kafka.ui.root-path` String, path to the Kafka UI, default is `/q/kafka-ui`
+* `quarkus.kafka.ui.handlerpath` String, path to the Kafka UI backend, default is `/q/kafka-admin`
+
+

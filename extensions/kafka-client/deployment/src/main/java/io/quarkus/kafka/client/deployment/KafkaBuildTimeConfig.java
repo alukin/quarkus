@@ -1,5 +1,6 @@
 package io.quarkus.kafka.client.deployment;
 
+import io.quarkus.runtime.annotations.ConfigDocSection;
 import io.quarkus.runtime.annotations.ConfigItem;
 import io.quarkus.runtime.annotations.ConfigPhase;
 import io.quarkus.runtime.annotations.ConfigRoot;
@@ -24,8 +25,21 @@ public class KafkaBuildTimeConfig {
     public boolean snappyEnabled;
 
     /**
+     * Whether or not the Kafka is running in RHOSAK.
+     */
+    @ConfigItem(name = "rhosak.isUsed", defaultValue = "false")
+    public boolean rhosakIsUsed;
+
+    /**
      * Configuration for DevServices. DevServices allows Quarkus to automatically start Kafka in dev and test mode.
      */
     @ConfigItem
     public KafkaDevServicesBuildTimeConfig devservices;
+
+    /**
+     * Kafka UI configuration
+     */
+    @ConfigItem
+    @ConfigDocSection
+    public KafkaBuildTimeUiConfig ui;
 }
