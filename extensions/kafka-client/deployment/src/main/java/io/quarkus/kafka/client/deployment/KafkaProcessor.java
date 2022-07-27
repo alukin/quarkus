@@ -159,7 +159,7 @@ public class KafkaProcessor {
     };
 
     static final DotName OBJECT_MAPPER = DotName.createSimple("com.fasterxml.jackson.databind.ObjectMapper");
-    private static final Set<String> SASL_PROVIDERS = Arrays.stream(new String[] {
+    private static final Set<String> SASL_PROVIDERS = Arrays.stream(new String[]{
             "com.sun.security.sasl.Provider",
             "org.apache.kafka.common.security.scram.internals.ScramSaslClientProvider",
             "org.apache.kafka.common.security.oauthbearer.internals.OAuthBearerSaslClientProvider"
@@ -207,7 +207,7 @@ public class KafkaProcessor {
 
     @BuildStep
     void silenceUnwantedConfigLogs(BuildProducer<LogCleanupFilterBuildItem> logCleanupFilters) {
-        String[] ignoredConfigProperties = { "wildfly.sasl.relax-compliance", "ssl.endpoint.identification.algorithm" };
+        String[] ignoredConfigProperties = {"wildfly.sasl.relax-compliance", "ssl.endpoint.identification.algorithm"};
 
         List<String> ignoredMessages = new ArrayList<>();
         for (String ignoredConfigProperty : ignoredConfigProperties) {
@@ -230,7 +230,7 @@ public class KafkaProcessor {
 
     @BuildStep
     void contributeClassesToIndex(BuildProducer<AdditionalIndexedClassesBuildItem> additionalIndexedClasses,
-            BuildProducer<IndexDependencyBuildItem> indexDependency) {
+                                  BuildProducer<IndexDependencyBuildItem> indexDependency) {
         indexDependency.produce(new IndexDependencyBuildItem("org.apache.kafka", "kafka-clients"));
     }
 
@@ -320,7 +320,7 @@ public class KafkaProcessor {
     }
 
     private void handleSnappy(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
-            BuildProducer<NativeImageResourceBuildItem> nativeLibs, NativeConfig nativeConfig) {
+                              BuildProducer<NativeImageResourceBuildItem> nativeLibs, NativeConfig nativeConfig) {
         reflectiveClass.produce(new ReflectiveClassBuildItem(true, true, true,
                 "org.xerial.snappy.SnappyInputStream",
                 "org.xerial.snappy.SnappyOutputStream"));
@@ -391,10 +391,10 @@ public class KafkaProcessor {
     }
 
     private void handleAvro(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
-            BuildProducer<NativeImageProxyDefinitionBuildItem> proxies,
-            BuildProducer<ServiceProviderBuildItem> serviceProviders,
-            BuildProducer<ExtensionSslNativeSupportBuildItem> sslNativeSupport,
-            Capabilities capabilities) {
+                            BuildProducer<NativeImageProxyDefinitionBuildItem> proxies,
+                            BuildProducer<ServiceProviderBuildItem> serviceProviders,
+                            BuildProducer<ExtensionSslNativeSupportBuildItem> sslNativeSupport,
+                            Capabilities capabilities) {
         // Avro - for both Confluent and Apicurio
 
         // --- Confluent ---
@@ -455,8 +455,8 @@ public class KafkaProcessor {
 
     @BuildStep
     public void withSasl(CombinedIndexBuildItem index,
-            BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
-            BuildProducer<ExtensionSslNativeSupportBuildItem> sslNativeSupport) {
+                         BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
+                         BuildProducer<ExtensionSslNativeSupportBuildItem> sslNativeSupport) {
 
         reflectiveClass
                 .produce(new ReflectiveClassBuildItem(false, false, AbstractLogin.DefaultLoginCallbackHandler.class));
@@ -526,7 +526,7 @@ public class KafkaProcessor {
 
     @BuildStep
     void registerServiceBinding(Capabilities capabilities,
-            BuildProducer<ServiceProviderBuildItem> serviceProvider) {
+                                BuildProducer<ServiceProviderBuildItem> serviceProvider) {
         if (capabilities.isPresent(Capability.KUBERNETES_SERVICE_BINDING)) {
             serviceProvider.produce(
                     new ServiceProviderBuildItem("io.quarkus.kubernetes.service.binding.runtime.ServiceBindingConverter",
@@ -604,11 +604,11 @@ public class KafkaProcessor {
     @BuildStep
     List<HotDeploymentWatchedFileBuildItem> uiBrandingFiles() {
         return Stream.of(BRANDING_LOGO_GENERAL,
-                BRANDING_STYLE_GENERAL,
-                BRANDING_FAVICON_GENERAL,
-                BRANDING_LOGO_MODULE,
-                BRANDING_STYLE_MODULE,
-                BRANDING_FAVICON_MODULE).map(HotDeploymentWatchedFileBuildItem::new)
+                        BRANDING_STYLE_GENERAL,
+                        BRANDING_FAVICON_GENERAL,
+                        BRANDING_LOGO_MODULE,
+                        BRANDING_STYLE_MODULE,
+                        BRANDING_FAVICON_MODULE).map(HotDeploymentWatchedFileBuildItem::new)
                 .collect(Collectors.toList());
     }
 

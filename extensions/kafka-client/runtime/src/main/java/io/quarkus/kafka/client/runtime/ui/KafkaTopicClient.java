@@ -1,21 +1,15 @@
 package io.quarkus.kafka.client.runtime.ui;
 
-import static io.quarkus.kafka.client.runtime.ui.util.ConsumerFactory.createConsumer;
-
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
+import io.quarkus.kafka.client.runtime.converter.KafkaModelConverter;
+import io.quarkus.kafka.client.runtime.ui.model.Order;
+import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessageCreateRequest;
+import io.quarkus.kafka.client.runtime.ui.model.response.KafkaMessagePage;
+import io.smallrye.common.annotation.Identifier;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -25,12 +19,17 @@ import org.apache.kafka.common.TopicPartitionInfo;
 import org.apache.kafka.common.serialization.BytesSerializer;
 import org.apache.kafka.common.utils.Bytes;
 
-import io.quarkus.kafka.client.runtime.converter.KafkaModelConverter;
-import io.quarkus.kafka.client.runtime.ui.model.KafkaMessagePage;
-import io.quarkus.kafka.client.runtime.ui.model.Order;
-import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessageCreateRequest;
-import io.quarkus.kafka.client.runtime.ui.model.response.KafkaMessagePage;
-import io.smallrye.common.annotation.Identifier;
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static io.quarkus.kafka.client.runtime.ui.util.ConsumerFactory.createConsumer;
 
 @Singleton
 public class KafkaTopicClient {
@@ -40,8 +39,7 @@ public class KafkaTopicClient {
     //TODO: inject me
     private AdminClient adminClient;
 
-    @Inject
-    KafkaModelConverter modelConverter;
+    private KafkaModelConverter modelConverter = new KafkaModelConverter();
 
     @Inject
     @Identifier("default-kafka-broker")
@@ -68,8 +66,8 @@ public class KafkaTopicClient {
     /**
      * Reads the messages from particular topic.
      *
-     * @param topicName topic to read messages from
-     * @param order ascending or descending. Defaults to descending (newest first)
+     * @param topicName        topic to read messages from
+     * @param order            ascending or descending. Defaults to descending (newest first)
      * @param partitionOffsets read offset position per requested partition
      * @return page of messages, matching requested filters
      */
@@ -110,7 +108,7 @@ public class KafkaTopicClient {
 
     // Method to fail fast on wrong params, even before querying Kafka.
     private void assertParamsValid(int pageSize, int pagesCount, List<Integer> requestedPartitions,
-            Map<Integer, Long> partitionOffsets) {
+                                   Map<Integer, Long> partitionOffsets) {
         if (pageSize <= 0)
             throw new IllegalArgumentException("Page size must be > 0.");
         if (pagesCount <= 0)
@@ -133,7 +131,7 @@ public class KafkaTopicClient {
     }
 
     public KafkaMessagePage getPage(String topicName, Order order, int pageSize, int pageNumber,
-            List<Integer> requestedPartitions) throws ExecutionException, InterruptedException {
+                                    List<Integer> requestedPartitions) throws ExecutionException, InterruptedException {
         var start = getPagePartitionOffset(topicName, requestedPartitions, order);
         return getTopicMessages(topicName, order, start, pageSize, pageNumber);
     }
@@ -149,7 +147,7 @@ public class KafkaTopicClient {
     }
 
     private Map<Integer, Long> calculateNewPartitionOffset(Map<Integer, Long> oldPartitionOffset,
-            Collection<ConsumerRecord<Bytes, Bytes>> records, Order order, String topicName) {
+                                                           Collection<ConsumerRecord<Bytes, Bytes>> records, Order order, String topicName) {
         var newOffsets = records.stream().map(ConsumerRecord::partition)
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
@@ -191,7 +189,7 @@ public class KafkaTopicClient {
     }
 
     private List<ConsumerRecord<Bytes, Bytes>> getConsumerRecords(String topicName, Order order, int pageSize,
-            Collection<Integer> requestedPartitions, Map<Integer, Long> start, int totalMessages) {
+                                                                  Collection<Integer> requestedPartitions, Map<Integer, Long> start, int totalMessages) {
         List<ConsumerRecord<Bytes, Bytes>> allPartitionsResult = new ArrayList<>();
         // Requesting a full page from each partition and then filtering out redundant data. Thus, we'll ensure, we read data in historical order.
         for (var requestedPartition : requestedPartitions) {
@@ -248,7 +246,7 @@ public class KafkaTopicClient {
     public void createMessage(KafkaMessageCreateRequest request) {
         var record = new ProducerRecord<>(request.getTopic(), request.getPartition(), Bytes.wrap(request.getKey().getBytes()),
                 Bytes.wrap(request.getValue().getBytes())
-        //TODO: support headers
+                //TODO: support headers
         );
 
         try (var consumer = createProducer()) {
