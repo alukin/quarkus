@@ -7,7 +7,7 @@ import io.quarkus.runtime.annotations.ConfigItem;
 public class KafkaBuildTimeUiConfig {
 
     /**
-     * The path where GraphQL UI is available.
+     * The path where Kafka UI is available.
      * The value `/` is not allowed as it blocks the application from serving anything else.
      * By default, this URL will be resolved as a path relative to `${quarkus.http.non-application-root-path}`.
      */
