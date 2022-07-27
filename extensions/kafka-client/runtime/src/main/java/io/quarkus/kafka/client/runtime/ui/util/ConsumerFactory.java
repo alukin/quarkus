@@ -1,4 +1,4 @@
-package io.quarkus.kafka.client.runtime.util;
+package io.quarkus.kafka.client.runtime.ui.util;
 
 import java.util.*;
 

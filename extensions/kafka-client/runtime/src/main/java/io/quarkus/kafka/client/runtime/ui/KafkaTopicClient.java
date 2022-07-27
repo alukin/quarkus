@@ -1,6 +1,6 @@
 package io.quarkus.kafka.client.runtime.ui;
 
-import static io.quarkus.kafka.client.runtime.util.ConsumerFactory.createConsumer;
+import static io.quarkus.kafka.client.runtime.ui.util.ConsumerFactory.createConsumer;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
