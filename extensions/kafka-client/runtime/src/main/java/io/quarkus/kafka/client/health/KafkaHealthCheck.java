@@ -42,7 +42,7 @@ public class KafkaHealthCheck implements HealthCheck {
         } catch (ExecutionException ex) {
             return builder.down().withData("reason", ex.getMessage()).build();
         } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt(); //TODO: is ti right?
+            Thread.currentThread().interrupt(); 
             return builder.down().withData("reason", ex.getMessage()).build();
         }
     }
