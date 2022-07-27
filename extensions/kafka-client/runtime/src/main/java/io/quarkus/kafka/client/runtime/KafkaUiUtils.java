@@ -22,6 +22,7 @@ import io.quarkus.kafka.client.runtime.ui.model.KafkaInfo;
 import io.quarkus.kafka.client.runtime.ui.model.KafkaMessagePage;
 import io.quarkus.kafka.client.runtime.ui.model.KafkaNode;
 import io.quarkus.kafka.client.runtime.ui.model.KafkaTopic;
+import io.quarkus.kafka.client.runtime.ui.model.Order;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessageCreateRequest;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessagesRequest;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaOffsetRequest;
