@@ -14,7 +14,6 @@
 
     <properties>
         <path.kafkaui>kafka-ui</path.kafkaui>
-        <json-rpc.version>1.3.0</json-rpc.version>
         <bootstrap-mutiliselect.version>0.9.15</bootstrap-mutiliselect.version>
         <bootstrap-icons.version>1.9.1</bootstrap-icons.version>
     </properties>
@@ -45,17 +44,7 @@
             <groupId>org.webjars.npm</groupId>
             <artifactId>bootstrap-icons</artifactId>
             <version>${bootstrap-icons.version}</version>            
-        </dependency>
-        <dependency>
-            <groupId>org.webjars.npm</groupId>
-            <artifactId>json-rpc-2.0</artifactId>
-            <version>${json-rpc.version}</version>          
-        </dependency>
-        <dependency>
-            <groupId>org.webjars</groupId>
-            <artifactId>codemirror</artifactId>
-            <scope>provided</scope>
-        </dependency>      
+        </dependency>     
     </dependencies>
     
     <build>                   
@@ -210,31 +199,6 @@
                                         <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper/>
                                     </fileMappers>
                                 </artifactItem>
-                                <!-- JSON-RPC -->
-                                <artifactItem>
-                                    <groupId>org.webjars.npm</groupId>
-                                    <artifactId>json-rpc-2.0</artifactId>
-                                    <version>${json-rpc.version}</version>
-                                    <type>jar</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.directory}/classes/META-INF/resources/${path.kafkaui}/json-rpc/</outputDirectory>
-                                    <includes>**/**.js</includes>
-                                    <fileMappers>
-                                        <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper/>
-                                    </fileMappers>                                                                        
-                                </artifactItem> 
-                                <artifactItem>
-                                    <groupId>org.webjars</groupId>
-                                    <artifactId>codemirror</artifactId>
-                                    <version>${webjar.codemirror.version}</version>
-                                    <type>jar</type>
-                                    <overWrite>true</overWrite>
-                                    <outputDirectory>${project.build.directory}/classes/META-INF/resources/${path.kafkaui}/codemirror/</outputDirectory>
-                                    <includes>**/lib/**.js, **/lib/**.css</includes>
-                                    <fileMappers>
-                                        <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper/>
-                                    </fileMappers>                                         
-                                </artifactItem>                                         
                             </artifactItems>
                         </configuration>
                     </execution>
