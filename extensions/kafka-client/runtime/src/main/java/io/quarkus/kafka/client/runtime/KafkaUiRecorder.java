@@ -1,34 +1,40 @@
 package io.quarkus.kafka.client.runtime;
 
-import io.quarkus.runtime.RuntimeValue;
+import java.util.List;
+import java.util.function.Consumer;
+
+import io.quarkus.runtime.ShutdownContext;
 import io.quarkus.runtime.annotations.Recorder;
+import io.quarkus.vertx.http.runtime.devmode.FileSystemStaticHandler;
+import io.quarkus.vertx.http.runtime.webjar.WebJarStaticHandler;
 import io.vertx.core.Handler;
-import io.vertx.ext.web.Router;
+import io.vertx.ext.web.Route;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.StaticHandler;
 
 /**
- * Handles POST requests from dev UI templates
+ * Handles requests from kafka UI and html/js of UI
  */
 @Recorder
 public class KafkaUiRecorder {
 
-    public void setupRoutes(RuntimeValue<Router> routerValue, String prefix) {
-        System.out.println("======================== setup of routes in recorder ===================== on " + prefix);
-        Router router = routerValue.getValue();
-        router.get(prefix + "/*").handler(StaticHandler
-                .create("META-INF/resources")
-                .setCachingEnabled(false)
-                .setDefaultContentEncoding("UTF-8")
-        //                .setWebRoot("/")
-        );
-        router.post(prefix + "/kafka-admin")
-                .handler(BodyHandler.create())
-                .handler(kafkaControlHandler());
-    }
-
     public Handler<RoutingContext> kafkaControlHandler() {
         return new KafkaUiHandler();
+    }
+
+    public Consumer<Route> routeFunction(Handler<RoutingContext> bodyHandler) {
+        return new Consumer<Route>() {
+            @Override
+            public void accept(Route route) {
+                route.handler(bodyHandler);
+            }
+        };
+    }
+
+    public Handler<RoutingContext> uiHandler(String finalDestination, String uiPath,
+            List<FileSystemStaticHandler.StaticWebRootConfiguration> webRootConfigurations,
+            ShutdownContext shutdownContext) {
+        WebJarStaticHandler handler = new WebJarStaticHandler(finalDestination, uiPath, webRootConfigurations);
+        shutdownContext.addShutdownTask(new ShutdownContext.CloseRunnable(handler));
+        return handler;
     }
 }

@@ -47,7 +47,11 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-vertx-http-deployment</artifactId>
-        </dependency>        
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-kafka-client-ui</artifactId>
+        </dependency>                
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
@@ -69,10 +73,6 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-devservices-deployment</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-kafka-client-ui</artifactId>
         </dependency>
     </dependencies>
 

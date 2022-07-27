@@ -1,10 +1,16 @@
 package io.quarkus.kafka.client.deployment;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -90,9 +96,18 @@ import io.quarkus.kafka.client.serialization.JsonbDeserializer;
 import io.quarkus.kafka.client.serialization.JsonbSerializer;
 import io.quarkus.kafka.client.serialization.ObjectMapperDeserializer;
 import io.quarkus.kafka.client.serialization.ObjectMapperSerializer;
+import io.quarkus.maven.dependency.GACT;
+import io.quarkus.runtime.LaunchMode;
+import io.quarkus.runtime.configuration.ConfigurationException;
 import io.quarkus.smallrye.health.deployment.spi.HealthBuildItem;
 import io.quarkus.vertx.http.deployment.NonApplicationRootPathBuildItem;
-import io.quarkus.vertx.http.deployment.VertxWebRouterBuildItem;
+import io.quarkus.vertx.http.deployment.RouteBuildItem;
+import io.quarkus.vertx.http.deployment.WebsocketSubProtocolsBuildItem;
+import io.quarkus.vertx.http.deployment.webjar.WebJarBuildItem;
+import io.quarkus.vertx.http.deployment.webjar.WebJarResourcesFilter;
+import io.quarkus.vertx.http.deployment.webjar.WebJarResultsBuildItem;
+import io.vertx.core.Handler;
+import io.vertx.ext.web.RoutingContext;
 
 public class KafkaProcessor {
 
@@ -141,6 +156,16 @@ public class KafkaProcessor {
 
     static final DotName PARTITION_ASSIGNER = DotName
             .createSimple("org.apache.kafka.clients.consumer.internals.PartitionAssignor");
+    // For the UI
+    private static final GACT KAFKA_UI_WEBJAR_ARTIFACT_KEY = new GACT("io.quarkus", "quarkus-kafka-client-ui", null, "jar");
+    private static final String KAFKA_UI_WEBJAR_STATIC_RESOURCES_PATH = "META-INF/resources/kafka-ui/";
+    private static final String FILE_TO_UPDATE = "render.js";
+    private static final String LINE_TO_UPDATE = "const api = '";
+    private static final String LINE_FORMAT = LINE_TO_UPDATE + "%s';";
+    private static final String UI_LINE_TO_UPDATE = "const ui = '";
+    private static final String UI_LINE_FORMAT = UI_LINE_TO_UPDATE + "%s';";
+    private static final String LOGO_LINE_TO_UPDATE = "const logo = '";
+    private static final String LOGO_LINE_FORMAT = LOGO_LINE_TO_UPDATE + "%s';";
 
     @BuildStep
     FeatureBuildItem feature() {
@@ -484,7 +509,7 @@ public class KafkaProcessor {
         }
     }
 
-    // Kafka Dev UI related stuff
+    // Kafka UI related stuff
 
     //TODO: make configurable
     @BuildStep
@@ -530,38 +555,149 @@ public class KafkaProcessor {
 
     @BuildStep
     @Record(ExecutionTime.RUNTIME_INIT)
-    public void registerKafkaUiHandler(
-            // BuildProducer<RouteBuildItem> routeProducer,
+    public void registerKafkaUiExecHandler(
+            BuildProducer<RouteBuildItem> routeProducer,
             KafkaUiRecorder recorder,
-            //            Map<String, Object> runtimeConfig,
             LaunchModeBuildItem launchMode,
+            HttpRootPathBuildItem httpRootPathBuildItem,
             NonApplicationRootPathBuildItem nonApplicationRootPathBuildItem,
             KafkaBuildTimeConfig buildConfig,
-            //WebJarResultsBuildItem webJarResultsBuildItem,
-            VertxWebRouterBuildItem vertxWebRouterBuildItem,
+            BodyHandlerBuildItem bodyHandlerBuildItem,
             ShutdownContextBuildItem shutdownContext) {
 
-        if (shouldIncludeDevUi(launchMode, buildConfig)) {
+        System.out.println("====================== registerKafkaUiExecHandler path: " + buildConfig.handlerRootPath
+                + " =======================");
 
-            String kafkaUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.devUiRootPath);
-            System.out
-                    .println("====================== registerKafkaUiHandler path: " + kafkaUiPath + " =======================");
+        if (shouldIncludeUi(launchMode, buildConfig)) {
 
-            recorder.setupRoutes(vertxWebRouterBuildItem.getHttpRouter(), kafkaUiPath);
+            //setup http request calls handler
+            Handler<RoutingContext> executionHandler = recorder.kafkaControlHandler();
+            HttpRootPathBuildItem.Builder requestBuilder = httpRootPathBuildItem.routeBuilder()
+                    .routeFunction(buildConfig.handlerRootPath, recorder.routeFunction(bodyHandlerBuildItem.getHandler()))
+                    .handler(executionHandler)
+                    .routeConfigKey("quarkus.kafka-client-ui.root-path")
+                    .displayOnNotFoundPage("Kafka UI Endpoint");
 
-            //            routeProducer.produce(nonApplicationRootPathBuildItem.routeBuilder()
-            //                    .route(buildConfig.devUiRootPath)
-            //                    .displayOnNotFoundPage("Kafka Dev UI not found")
-            //                    .handler(BodyHandler.create())
-            //                    .handler(StaticHandler
-            //                            .create()
-            //                            .setCachingEnabled(false)
-            //                            .setWebRoot("/"))
-            //                    .build());
+            routeProducer.produce(requestBuilder.build());
         }
     }
 
-    private static boolean shouldIncludeDevUi(LaunchModeBuildItem launchMode, KafkaBuildTimeConfig config) {
-        return launchMode.getLaunchMode().isDevOrTest() || config.devUiEnabled;
+    @BuildStep
+    void getKafkaUiFinalDestination(
+            HttpRootPathBuildItem httpRootPath,
+            NonApplicationRootPathBuildItem nonApplicationRootPathBuildItem,
+            LaunchModeBuildItem launchMode,
+            KafkaBuildTimeConfig buildConfig,
+            BuildProducer<WebJarBuildItem> webJarBuildProducer) {
+
+        System.out.println(
+                "====================== getKafkaUiFinalDestination " + buildConfig.uiRootPath + " =======================");
+
+        if (shouldIncludeUi(launchMode, buildConfig)) {
+
+            if ("/".equals(buildConfig.uiRootPath)) {
+                throw new ConfigurationException(
+                        "quarkus.kafka-client-ui.root-path was set to \"/\", this is not allowed as it blocks the application from serving anything else.",
+                        Collections.singleton("quarkus.kafka-client-ui.root-path"));
+            }
+            //
+            String devUiPath = nonApplicationRootPathBuildItem.resolvePath("dev");
+            String kafkaUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.uiRootPath);
+            String kafkaHandlerPath = httpRootPath.resolvePath(buildConfig.handlerRootPath);
+            webJarBuildProducer.produce(
+                    WebJarBuildItem.builder().artifactKey(KAFKA_UI_WEBJAR_ARTIFACT_KEY) //
+                            .root(KAFKA_UI_WEBJAR_STATIC_RESOURCES_PATH) //
+                            .filter(new WebJarResourcesFilter() {
+                                @Override
+                                public WebJarResourcesFilter.FilterResult apply(String fileName, InputStream file)
+                                        throws IOException {
+                                    if (fileName.endsWith(FILE_TO_UPDATE)) {
+                                        String content = new String(file.readAllBytes(), StandardCharsets.UTF_8);
+                                        content = updateUrl(content, kafkaHandlerPath,
+                                                LINE_TO_UPDATE,
+                                                LINE_FORMAT);
+                                        content = updateUrl(content, kafkaUiPath,
+                                                UI_LINE_TO_UPDATE,
+                                                UI_LINE_FORMAT);
+                                        content = updateUrl(content, getLogoUrl(launchMode, devUiPath, kafkaUiPath),
+                                                LOGO_LINE_TO_UPDATE,
+                                                LOGO_LINE_FORMAT);
+
+                                        return new WebJarResourcesFilter.FilterResult(
+                                                new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)), true);
+                                    }
+
+                                    return new WebJarResourcesFilter.FilterResult(file, false);
+                                }
+                            })
+                            .build());
+        }
+    }
+
+    @BuildStep
+    @Record(ExecutionTime.RUNTIME_INIT)
+    void registerKafkaUiHandler(
+            BuildProducer<RouteBuildItem> routeProducer,
+            KafkaUiRecorder recorder,
+            LaunchModeBuildItem launchMode,
+            NonApplicationRootPathBuildItem nonApplicationRootPathBuildItem,
+            KafkaBuildTimeConfig buildConfig,
+            WebJarResultsBuildItem webJarResultsBuildItem,
+            ShutdownContextBuildItem shutdownContext) {
+
+        System.out.println(
+                "====================== registerKafkaUiHandler " + buildConfig.uiRootPath + " =======================");
+
+        WebJarResultsBuildItem.WebJarResult result = webJarResultsBuildItem.byArtifactKey(KAFKA_UI_WEBJAR_ARTIFACT_KEY);
+        if (result == null) {
+            return;
+        }
+
+        if (shouldIncludeUi(launchMode, buildConfig)) {
+            String graphQLUiPath = nonApplicationRootPathBuildItem.resolvePath(buildConfig.uiRootPath);
+
+            Handler<RoutingContext> handler = recorder.uiHandler(result.getFinalDestination(),
+                    graphQLUiPath, result.getWebRootConfigurations(), shutdownContext);
+            routeProducer.produce(nonApplicationRootPathBuildItem.routeBuilder()
+                    .route(buildConfig.uiRootPath)
+                    .displayOnNotFoundPage("Kafka UI")
+                    .routeConfigKey("quarkus.kafka-client.ui.root-path")
+                    .handler(handler)
+                    .build());
+
+            routeProducer.produce(nonApplicationRootPathBuildItem.routeBuilder()
+                    .route(buildConfig.uiRootPath + "*")
+                    .handler(handler)
+                    .build());
+
+        }
+    }
+
+    // In dev mode, when you click on the logo, you should go to Dev UI
+    private String getLogoUrl(LaunchModeBuildItem launchMode, String devUIValue, String defaultValue) {
+        if (launchMode.getLaunchMode().equals(LaunchMode.DEVELOPMENT)) {
+            return devUIValue;
+        }
+        return defaultValue;
+    }
+
+    private String updateUrl(String original, String path, String lineStartsWith, String format) {
+        try (Scanner scanner = new Scanner(original)) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                if (line.trim().startsWith(lineStartsWith)) {
+                    String newLine = String.format(format, path);
+                    return original.replace(line.trim(), newLine);
+                }
+            }
+        }
+
+        return original;
+    }
+
+    private static boolean shouldIncludeUi(LaunchModeBuildItem launchMode, KafkaBuildTimeConfig config) {
+        System.out.println("************ launch mode: " + launchMode.getLaunchMode());
+        System.out.println("************ ui enabled: " + config.uiEnabled);
+        return launchMode.getLaunchMode().isDevOrTest() || config.uiEnabled;
     }
 }
