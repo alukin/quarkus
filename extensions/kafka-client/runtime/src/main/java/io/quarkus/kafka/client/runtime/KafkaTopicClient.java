@@ -26,8 +26,8 @@ import org.apache.kafka.common.serialization.BytesSerializer;
 import org.apache.kafka.common.utils.Bytes;
 import org.jboss.logging.Logger;
 
-import io.quarkus.kafka.client.runtime.devconsole.model.KafkaMessageCreateRequest;
-import io.quarkus.kafka.client.runtime.devconsole.model.Order;
+import io.quarkus.kafka.client.runtime.devui.model.KafkaMessageCreateRequest;
+import io.quarkus.kafka.client.runtime.devui.model.Order;
 import io.smallrye.common.annotation.Identifier;
 
 @Singleton
