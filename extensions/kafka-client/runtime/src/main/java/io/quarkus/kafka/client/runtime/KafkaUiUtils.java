@@ -1,21 +1,25 @@
 package io.quarkus.kafka.client.runtime;
 
+import static io.quarkus.kafka.client.runtime.util.ConsumerFactory.createConsumer;
+
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import javax.inject.Singleton;
 
-import org.apache.kafka.clients.admin.ConsumerGroupListing;
+import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
+import org.apache.kafka.clients.admin.MemberDescription;
 import org.apache.kafka.clients.admin.TopicListing;
-import org.apache.kafka.common.ConsumerGroupState;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.Node;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.acl.AclOperation;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.quarkus.kafka.client.runtime.converter.KafkaModelConverter;
 import io.quarkus.kafka.client.runtime.ui.model.KafkaClusterInfo;
 import io.quarkus.kafka.client.runtime.ui.model.KafkaConsumerGroup;
 import io.quarkus.kafka.client.runtime.ui.model.KafkaInfo;
@@ -26,6 +30,7 @@ import io.quarkus.kafka.client.runtime.ui.model.Order;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessageCreateRequest;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaMessagesRequest;
 import io.quarkus.kafka.client.runtime.ui.model.request.KafkaOffsetRequest;
+import io.smallrye.common.annotation.Identifier;
 
 @Singleton
 public class KafkaUiUtils {
@@ -35,14 +40,14 @@ public class KafkaUiUtils {
     private final KafkaTopicClient kafkaTopicClient;
     private final ObjectMapper objectMapper;
 
-    private final KafkaModelConverter modelConverter;
+    private Map<String, Object> config;
 
     public KafkaUiUtils(KafkaAdminClient kafkaAdminClient, KafkaTopicClient kafkaTopicClient, ObjectMapper objectMapper,
-            KafkaModelConverter modelConverter) {
+                        @Identifier("default-kafka-broker") Map<String, Object> config) {
         this.kafkaAdminClient = kafkaAdminClient;
         this.kafkaTopicClient = kafkaTopicClient;
         this.objectMapper = objectMapper;
-        this.modelConverter = modelConverter;
+        this.config = config;
     }
 
     public KafkaInfo getKafkaInfo() throws ExecutionException, InterruptedException {
@@ -72,13 +77,59 @@ public class KafkaUiUtils {
 
     public List<KafkaConsumerGroup> getConsumerGroups() throws InterruptedException, ExecutionException {
         List<KafkaConsumerGroup> res = new ArrayList<>();
-        for (ConsumerGroupListing cgl : kafkaAdminClient.getConsumerGroups()) {
-            KafkaConsumerGroup cg = new KafkaConsumerGroup();
-            cg.name = cgl.groupId();
-            cg.state = cgl.state().orElse(ConsumerGroupState.EMPTY).name();
-            res.add(cg);
+        for (ConsumerGroupDescription cgd : kafkaAdminClient.getConsumerGroups()) {
+
+            var metadata = kafkaAdminClient.listConsumerGroupOffsets(cgd.groupId())
+                    .partitionsToOffsetAndMetadata().get();
+            var members = cgd.members().stream()
+                    .map(member -> new KafkaConsumerGroupMember(
+                            member.consumerId(),
+                            member.clientId(),
+                            member.host(),
+                            getPartitionAssignments(metadata, member)))
+                    .collect(Collectors.toSet());
+
+            res.add(new KafkaConsumerGroup(
+                    cgd.groupId(),
+                    cgd.state().name(),
+                    cgd.coordinator().host(),
+                    cgd.coordinator().id(),
+                    cgd.partitionAssignor(),
+                    getTotalLag(members),
+                    members));
         }
         return res;
+    }
+
+    private long getTotalLag(Set<KafkaConsumerGroupMember> members) {
+        return members.stream()
+                .map(KafkaConsumerGroupMember::getPartitions)
+                .flatMap(Collection::stream)
+                .map(KafkaConsumerGroupMemberPartitionAssignment::getLag)
+                .reduce(Long::sum)
+                .orElse(0L);
+    }
+
+    private Set<KafkaConsumerGroupMemberPartitionAssignment> getPartitionAssignments(
+            Map<TopicPartition, OffsetAndMetadata> topicOffsetMap, MemberDescription member) {
+        var topicPartitions = member.assignment().topicPartitions();
+        try (var consumer = createConsumer(topicPartitions, config)) {
+            var endOffsets = consumer.endOffsets(topicPartitions);
+
+            return topicPartitions.stream()
+                    .map(tp -> {
+                        var topicOffset = Optional.ofNullable(topicOffsetMap.get(tp))
+                                .map(OffsetAndMetadata::offset)
+                                .orElse(0L);
+                        return new KafkaConsumerGroupMemberPartitionAssignment(tp.partition(), tp.topic(),
+                                getLag(topicOffset, endOffsets.get(tp)));
+                    })
+                    .collect(Collectors.toSet());
+        }
+    }
+
+    private long getLag(long topicOffset, long endOffset) {
+        return endOffset - topicOffset;
     }
 
     public KafkaClusterInfo getClusterInfo() throws ExecutionException, InterruptedException {
