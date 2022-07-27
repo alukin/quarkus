@@ -1,4 +1,4 @@
-package io.quarkus.kafka.client.runtime.ui.model;
+package io.quarkus.kafka.client.runtime.ui.model.response;
 
 import java.util.Collection;
 

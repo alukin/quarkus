@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.inject.Singleton;
 
+import io.quarkus.kafka.client.runtime.ui.model.response.*;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.admin.MemberDescription;
